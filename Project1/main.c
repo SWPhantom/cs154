@@ -22,17 +22,18 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
-	maxpc = load(argv[1]);
+	//printf("About to load(argv[1]);!\n"); //DEBUG
+	maxpc = load(argv[1]);//Confirmed to work, AFAIK
 	printLoad(maxpc);
 
-	while (pc < maxpc)
+	while (pc <= maxpc)
 	{
-		fetch(instPtr);
-		decode(instPtr);
-		execute(instPtr);
-		memory(instPtr);
-		writeback(instPtr);
-		print(instPtr,instnum++);
+		fetch(instPtr);				//TODO
+		decode(instPtr);				//TODO
+		execute(instPtr);				//TODO
+		memory(instPtr);				//TODO
+		writeback(instPtr);			//TODO
+		print(instPtr,instnum++);	//TODO
 	}
 	exit(0);
 }

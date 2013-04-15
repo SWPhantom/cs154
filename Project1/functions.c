@@ -30,8 +30,31 @@ int pc;
  */
 int load(char *filename)
 {
-
-	return 0;
+	//printf("About to open the fileee.\n");
+	FILE *program;
+	//Opens the specified file.
+	program = fopen(filename, "r");
+	if (program == NULL) {//error if file can't be opened.
+		fprintf(stderr, "Can't open file!\n");
+		exit(1);
+	}
+	
+	//Add the integer commands to the array.
+	//printf("About to scan the file!\n");
+	int index = 0;
+	while(fscanf(program, "%d", &instmem[index]) != EOF){	//While the next line
+																			//is not EOF, read in
+																			//to the array.
+		//printf("Data in position %d: %d\n", index, instmem[index]);//DEBUG!
+		++index;
+	}
+	//Sets the non-used addresses to 0
+	int i;
+	for(i = index; i < 100; ++i){
+		instmem[i] = 0;
+	}
+	//printf("Total instructions: %d", index);//Debug
+	return index;
 }
 
 /* fetch
@@ -63,21 +86,24 @@ void decode(InstInfo *instruction)
 	// now fill in the signals
 
 	// if it is an add
-	{
-		instruction->signals.aluop = 1;
-		instruction->signals.mw = 0;
-		instruction->signals.mr = 0;
-		instruction->signals.mtr = 0;
-		instruction->signals.asrc = 0;
-		instruction->signals.btype = 0;
-		instruction->signals.rdst = 1;
-		instruction->signals.rw = 1;
-		sprintf(instruction->string,"add $%d, $%d, $%d",
-			instruction->fields.rd, instruction->fields.rs, 
-			instruction->fields.rt);
-		instruction->destreg = instruction->fields.rd;
-	}
-
+	//if(instruction->fields.op == 0x1ADB0){	//Check to see if the
+															//opcode is 110000
+		//if(instruction->fields.func == 0x3F2){	//Check to see if the
+																//funccode is 001010
+			instruction->signals.aluop = 1;
+			instruction->signals.mw = 0;
+			instruction->signals.mr = 0;
+			instruction->signals.mtr = 0;
+			instruction->signals.asrc = 0;
+			instruction->signals.btype = 0;
+			instruction->signals.rdst = 1;
+			instruction->signals.rw = 1;
+			sprintf(instruction->string,"add $%d, $%d, $%d",
+				instruction->fields.rd, instruction->fields.rs, 
+				instruction->fields.rt);
+			instruction->destreg = instruction->fields.rd;
+		//}
+	//}
 
 	// fill in s1data and input2
 }
