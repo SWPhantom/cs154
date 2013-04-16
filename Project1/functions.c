@@ -53,6 +53,9 @@ int load(char *filename)
 	for(i = index; i < 100; ++i){
 		instmem[i] = 0;
 	}
+	
+	pc =  0;//This is to set the program counter to the initial instruction.
+	
 	//printf("Total instructions: %d", index);//Debug
 	return index;
 }
@@ -63,7 +66,8 @@ int load(char *filename)
  * "fetching" means filling in the inst field of the instruction.
  */
 void fetch(InstInfo *instruction)
-{
+{  
+	instruction->inst = instmem[pc];
 }
 
 /* decode
@@ -79,17 +83,28 @@ void decode(InstInfo *instruction)
 {
 	// fill in the signals and fields
 	int val = instruction->inst;
-	int op, func;
-	instruction->fields.op = (val >> 26) & 0x03f;
-	// fill in the rest of the fields here
-
+	int op, func, rs, rd, rt, imm; //Added rs, rd, rt, imm
+	op = (val >> 26) & 0x03f;	//Take the first 6 bits.
+	func = val & 0x3f;	//Take the last 6 bits.
+	rs = (val >> 21) & 0x1f;	//Take corresponding bits.
+	rd = (val >> 16) & 0x1f;	//"
+	rt = (val >> 11) & 0x1f;	//"
+	imm = val & 0xffff;	//Take right 16 bits in casse immediate is used.
+	instruction->fields.op = op;
+	instruction->fields.func = func;
+	instruction->fields.rd = rd;
+	instruction->fields.rs = rs;
+	instruction->fields.rt = rt;
+	instruction->fields.imm = imm;
+	
 	// now fill in the signals
 
-	// if it is an add
-	//if(instruction->fields.op == 0x1ADB0){	//Check to see if the
-															//opcode is 110000
-		//if(instruction->fields.func == 0x3F2){	//Check to see if the
-																//funccode is 001010
+	////This is a massive if section. Gross, but I don't think there is an alternative.
+	
+	//Things with the 110000 op code.
+	if(instruction->fields.op == 48){
+		//Add
+		if(instruction->fields.func == 10){	//Check to see if the func is 001010
 			instruction->signals.aluop = 1;
 			instruction->signals.mw = 0;
 			instruction->signals.mr = 0;
@@ -102,8 +117,55 @@ void decode(InstInfo *instruction)
 				instruction->fields.rd, instruction->fields.rs, 
 				instruction->fields.rt);
 			instruction->destreg = instruction->fields.rd;
-		//}
-	//}
+		}
+		//Or - TODO: Please Verify and delete this if correct---------------------------!!!!!!
+		if(instruction->fields.func == 48){	//Check to see if the func is 110000
+			instruction->signals.aluop = 4;
+			instruction->signals.mw = 0;
+			instruction->signals.mr = 0;
+			instruction->signals.mtr = 0;
+			instruction->signals.asrc = 0;
+			instruction->signals.btype = 0;
+			instruction->signals.rdst = 1;
+			instruction->signals.rw = 1;
+			sprintf(instruction->string,"or $%d, $%d, $%d",
+				instruction->fields.rd, instruction->fields.rs, 
+				instruction->fields.rt);
+			instruction->destreg = instruction->fields.rd;
+		}
+		//SLT - TODO: Please Verify and delete this if correct---------------------------!!!!!!
+		if(instruction->fields.func == 15){	//Check to see if the func is 001111
+			instruction->signals.aluop = 6;
+			instruction->signals.mw = 0;
+			instruction->signals.mr = 0;
+			instruction->signals.mtr = 0;
+			instruction->signals.asrc = 0;
+			instruction->signals.btype = 0;
+			instruction->signals.rdst = 1;
+			instruction->signals.rw = 1;
+			sprintf(instruction->string,"slt $%d, $%d, $%d",
+				instruction->fields.rd, instruction->fields.rs, 
+				instruction->fields.rt);
+			instruction->destreg = instruction->fields.rd;
+		}
+		//XOR - TODO: Please Verify and delete this if correct---------------------------!!!!!!
+		if(instruction->fields.func == 20){	//Check to see if the func is 010100
+			instruction->signals.aluop = 3;
+			instruction->signals.mw = 0;
+			instruction->signals.mr = 0;
+			instruction->signals.mtr = 0;
+			instruction->signals.asrc = 0;
+			instruction->signals.btype = 0;
+			instruction->signals.rdst = 1;
+			instruction->signals.rw = 1;
+			sprintf(instruction->string,"xor $%d, $%d, $%d",
+				instruction->fields.rd, instruction->fields.rs, 
+				instruction->fields.rt);
+			instruction->destreg = instruction->fields.rd;
+		}
+	}
+	
+	////This is where the other operations will go.
 
 	// fill in s1data and input2
 }

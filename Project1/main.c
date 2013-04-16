@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 	maxpc = load(argv[1]);//Confirmed to work, AFAIK
 	printLoad(maxpc);
 
-	while (pc <= maxpc)
+	//while (pc <= maxpc)
 	{
 		fetch(instPtr);				//TODO
 		decode(instPtr);				//TODO
