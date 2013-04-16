@@ -68,6 +68,7 @@ int load(char *filename)
 void fetch(InstInfo *instruction)
 {  
 	instruction->inst = instmem[pc];
+	pc++;
 }
 
 /* decode
@@ -164,7 +165,109 @@ void decode(InstInfo *instruction)
 			instruction->destreg = instruction->fields.rd;
 		}
 	}
+	//Operation with op code 011100: subi 
+	if (instruction->fields.op == 28){
+		instruction->signals.aluop = 5; 
+		instruction->signals.mw = 0;
+		instruction->signals.mr = 0;
+		instruction->signals.mtr = 0;
+		instruction->signals.asrc = 1;
+		instruction->signals.btype = 0;
+		instruction->signals.rdst = 0;
+		instruction->signals.rw = 1;
+		sprintf(instruction->string,"subi $%d, $%d, $%d",
+			instruction->fields.rt, instruction->fields.rs, 
+			instruction->fields.imm);
+		instruction->destreg = instruction->fields.rt;		
+	}
+	//Operation with op code 000110: lw 
+	if (instruction->fields.op == 6){
+		instruction->signals.aluop = 1; //LW should use the Add ALUop
+		instruction->signals.mw = 0;
+		instruction->signals.mr = 1;
+		instruction->signals.mtr = 1;
+		instruction->signals.asrc = 1;
+		instruction->signals.btype = 0;
+		instruction->signals.rdst = 0;
+		instruction->signals.rw = 1;
+		//Format as either "lw $x, $y" or "lw $x, z($y)" depending on immediate value
+		if (instruction->fields.imm == 0){
+			sprintf(instruction->string,"lw $%d, $%d",
+				instruction->fields.rt, instruction->fields.rs);		
+		}
+		else{
+			sprintf(instruction->string,"lw $%d, %d($%d)",
+				instruction->fields.rt, instruction->fields.imm, 
+				instruction->fields.rs);		
+		}
+		instruction->destreg = instruction->fields.rt;		
+	}	
+	//Operation with op code 000110: sw 
+	if (instruction->fields.op == 2){
+		instruction->signals.aluop = 1; //SW should use the Add ALUop
+		instruction->signals.mw = 1;
+		instruction->signals.mr = 0;
+		instruction->signals.mtr = -1;
+		instruction->signals.asrc = 1;
+		instruction->signals.btype = 0;
+		instruction->signals.rdst = -1;
+		instruction->signals.rw = 0;
+		//Format as either "sw $x, $y" or "sw $x, z($y)" depending on immediate value
+		if (instruction->fields.imm == 0){
+			sprintf(instruction->string,"sw $%d, $%d",
+				instruction->fields.rt, instruction->fields.rs);		
+		}
+		else{
+			sprintf(instruction->string,"sw $%d, %d($%d)",
+				instruction->fields.rt, instruction->fields.imm, 
+				instruction->fields.rs);		
+		}
+		//TODO: Incomplete. Need to update assignment statement
+		instruction->destdata = instruction->fields.rt;	//destdata = Mem[rs+imm]	
+	}	
+	//Operation with op code 100111: bge 
+	if (instruction->fields.op == 39){
+		instruction->signals.aluop = 5; //SUB. Verification needed.
+		instruction->signals.mw = 0;
+		instruction->signals.mr = 0;
+		instruction->signals.mtr = -1;
+		instruction->signals.asrc = 0;
+		instruction->signals.btype = 2;
+		instruction->signals.rdst = -1;
+		instruction->signals.rw = 0;
+		//TODO: bge's last argument should be a label. Need to verify label format
+		sprintf(instruction->string,"bge $%d, $%d, %d",
+			instruction->fields.rt, instruction->fields.rs, 
+			instruction->fields.imm);
+	}
 	
+	//Operation with op code 100100: j 
+	if (instruction->fields.op == 36){
+		instruction->signals.aluop = -1;
+		instruction->signals.mw = 0;
+		instruction->signals.mr = 0;
+		instruction->signals.mtr = -1;
+		instruction->signals.asrc = -1;
+		instruction->signals.btype = 1;
+		instruction->signals.rdst = -1;
+		instruction->signals.rw = 0;
+		sprintf(instruction->string,"j %d", instruction->fields.imm);
+	}
+	
+	//Operation with op code 100010: jal 
+	if (instruction->fields.op == 34){
+		instruction->signals.aluop = -1;
+		instruction->signals.mw = 0;
+		instruction->signals.mr = 0;
+		instruction->signals.mtr = -1;
+		instruction->signals.asrc = -1;
+		instruction->signals.btype = 1;
+		instruction->signals.rdst = -1;
+		instruction->signals.rw = 1;
+		sprintf(instruction->string,"jal %d", instruction->fields.imm);
+		//Need to write to $ra = register 31
+		instruction->destreg = 31;			
+	}	
 	////This is where the other operations will go.
 
 	// fill in s1data and input2
