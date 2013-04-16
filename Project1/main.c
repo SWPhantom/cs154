@@ -26,13 +26,13 @@ int main(int argc, char *argv[])
 	maxpc = load(argv[1]);//Confirmed to work, AFAIK
 	printLoad(maxpc);
 
-	//while (pc <= maxpc)
+	while (pc <= maxpc)
 	{
-		fetch(instPtr);				//TODO
-		decode(instPtr);				//TODO
-		execute(instPtr);				//TODO
-		memory(instPtr);				//TODO
-		writeback(instPtr);			//TODO
+		fetch(instPtr);				//TODO: 99%
+		decode(instPtr);				//TODO: 99%
+		execute(instPtr);				//TODO: 0%
+		memory(instPtr);				//TODO: 0%
+		writeback(instPtr);			//TODO: 0%
 		print(instPtr,instnum++);	//TODO
 	}
 	exit(0);
