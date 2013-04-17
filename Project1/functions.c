@@ -7,7 +7,7 @@
 // register file
 int regfile[32];
 // instruction memory
-int instmem[100];  // only support 100 static instructions
+int instmem[100];  // only support 100 static instruction
 // data memory
 int datamem[1000];
 // program counter
@@ -20,12 +20,12 @@ int pc;
 /* load
 *
 * Given the filename, which is a text file that
-* contains the instructions stored as integers
+* contains the instruction stored as integers
 *
 * You will need to load it into your global structure that
-* stores all of the instructions.
+* stores all of the instruction.
 *
-* The return value is the maxpc - the number of instructions
+* The return value is the maxpc - the number of instruction
 * in the file
 */
 
@@ -55,7 +55,7 @@ int load(char *filename)
 
 	pc = 0;//This is to set the program counter to the initial instruction.
 
-	//printf("Total instructions: %d\n", index);//Debug---------------------------
+	//printf("Total instruction: %d\n", index);//Debug---------------------------
 	return index-1; //Adjust index for off-by-one error from while loop
 }
 
@@ -68,7 +68,7 @@ int load(char *filename)
 void fetch(InstInfo *instruction)
 {
 	instruction->inst = instmem[pc];
-	//pc++; //Increment the PC counter // THIS IS MOVED TO ALL THE EXECUTION POSSIBILITIES.
+	++pc; //Increment the PC counter
 }
 
 /* decode
@@ -92,11 +92,11 @@ void decode(InstInfo *instruction)
 	rd = (val >> 11) & 0x1f;	//"
 	imm = (val >> 0) & 0xffff;	//Take right 16 bits in case immediate is used.
 
-	if (imm > 32767){ //If imm is very large, it needs to be complemented
+	//if (imm > 32767){ //If imm is very large, it needs to be complemented
 		//Magic that performs two's complement
 		//See: http://forums.devshed.com/c-programming-42/converting-a-number-in-two-s-complement-223374.html
 		imm = (imm << 16) >> 16;
-	}
+	//}
 
 	instruction->fields.op = op;
 	instruction->fields.func = func;
@@ -206,7 +206,6 @@ void decode(InstInfo *instruction)
 		instruction->signals.rdst = -1;
 		instruction->signals.rw = 0;
 		sprintf(instruction->string,"sw $%d, %d ($%d)",instruction->fields.rt, instruction->fields.imm, instruction->fields.rs);
-		//TODO: Incomplete. Need to update assignment statement
 		instruction->destdata = instruction->fields.rt;	//destdata = Mem[rs+imm]
 	}else
 	//Operation with op code 100111: bge
@@ -232,6 +231,7 @@ void decode(InstInfo *instruction)
 		instruction->signals.rdst = -1;
 		instruction->signals.rw = 0;
 		sprintf(instruction->string,"j %d", instruction->fields.imm);
+		pc = instruction->fields.imm; //POSSIBLY THE WRONG PLACE D:
 	}else
 	//Operation with op code 100010: jal
 	if (instruction->fields.op == 34){
@@ -260,62 +260,50 @@ void execute(InstInfo *instruction)
 		//Add
 		if(instruction->fields.func == 10){	//Check to see if the func is 001010
 			//"add $rd, $rs, $rt"
-			regfile[instructions->fields.rd] = regfile[instructions->fields.rs] + regfile[instructions->fields.rt];
+			instruction->aluout = regfile[instruction->fields.rs] + regfile[instruction->fields.rt];
 		}else
 		//Or
 		if(instruction->fields.func == 48){	//Check to see if the func is 110000
 			//"or $rd, $rs, $rt"
-			regfile[instructions->fields.rd] = regfile[instructions->fields.rs] | regfile[instructions->fields.rt];
+			instruction->aluout = regfile[instruction->fields.rs] | regfile[instruction->fields.rt];
 		}else
 		//SLT
 		if(instruction->fields.func == 15){	//Check to see if the func is 001111
 			//"slt $rd, $rs, $rt"
-			if(regfile[instructions->fields.rs] < regfile[instructions->fields.rt]){
-				regfile[instructions->fields.rd] = 1;
+			if(regfile[instruction->fields.rs] - regfile[instruction->fields.rt] < 0){
+				instruction->aluout = 1;
 			}else{
-				regfile[instructions->fields.rd] = 0;
+				instruction->aluout = 0;
 			}
 		}else
 		//XOR
 		if(instruction->fields.func == 20){	//Check to see if the func is 010100
 			//"xor $rd, $rs, $rt"
-			regfile[instructions->fields.rd] = regfile[instructions->fields.rs] ^ regfile[instructions->fields.rt];
+			instruction->aluout = regfile[instruction->fields.rs] ^ regfile[instruction->fields.rt];
 		}
 	}else
 	//Operation with op code 011100: subi
 	if (instruction->fields.op == 28){
 		//"subi $rt, $rs, imm"
-		regfile[instructions->fields.rt] = regfile[instructions->fields.rs] - instructions->fields.imm;
+		instruction->aluout = regfile[instruction->fields.rs] - instruction->fields.imm;
 	}else
 	//Operation with op code 000110: lw
-	if (instruction->fields.op == 6){//TODO: NOT DONE!
+	if (instruction->fields.op == 6){
 		//"lw $rt, imm ($rs)"
-		regfile[] = datamem[];
+		instruction->aluout = regfile[instruction->fields.rs] + instruction->fields.imm;
 	}else
 	//Operation with op code 000110: sw
-	if (instruction->fields.op == 2){//TODO: NOT DONE!
+	if (instruction->fields.op == 2){
 		//"sw $rt, imm ($rs)"
-		datamem[] = regfile[];
+		instruction->aluout = regfile[instruction->fields.rs] + instruction->fields.imm;
 	}else
 	//Operation with op code 100111: bge
 	if (instruction->fields.op == 39){
 		//"bge $rs, $rt, imm"
-		if(instructions->fields.rs >= instructions->fields.rt){
-			pc += (1+instructions->fields.imm);
-		}else{
-			++pc;
+		instruction->aluout = instruction->fields.rs - instruction->fields.rt;
+		if(instruction->fields.rs >= instruction->fields.rt){
+			pc += (instruction->fields.imm);
 		}
-	}else
-	//Operation with op code 100100: j
-	if (instruction->fields.op == 36){
-		//"j imm"
-		pc = instructions->fields.imm;
-	}else
-	//Operation with op code 100010: jal
-	if (instruction->fields.op == 34){
-		//"jal imm"
-		regile[31] = pc + 1;
-		pc = instructions->fields.imm;
 	}
 }
 
@@ -325,7 +313,16 @@ void execute(InstInfo *instruction)
 */
 void memory(InstInfo *instruction)
 {
-
+	//Operation with op code 000110: lw
+	if (instruction->fields.op == 6){
+		//"lw $rt, imm ($rs)"
+		instruction->memout = datamem[(instruction->aluout)%1000];
+	}else
+	//Operation with op code 000110: sw
+	if (instruction->fields.op == 2){
+		//"sw $rt, imm ($rs)"
+		datamem[(instruction->aluout)%1000] = regfile[instruction->fields.rt];
+	}
 }
 
 /* writeback
@@ -334,5 +331,44 @@ void memory(InstInfo *instruction)
 */
 void writeback(InstInfo *instruction)
 {
+	if(instruction->fields.op == 48){
+		//Add
+		if(instruction->fields.func == 10){	//Check to see if the func is 001010
+			//"add $rd, $rs, $rt"
+			regfile[instruction->fields.rd] = instruction->aluout;
+		}else
+		//Or
+		if(instruction->fields.func == 48){	//Check to see if the func is 110000
+			//"or $rd, $rs, $rt"
+			regfile[instruction->fields.rd] = instruction->aluout;
+		}else
+		//SLT
+		if(instruction->fields.func == 15){	//Check to see if the func is 001111
+			//"slt $rd, $rs, $rt"
+			regfile[instruction->fields.rd] = instruction->aluout;
+		}else
+		//XOR
+		if(instruction->fields.func == 20){	//Check to see if the func is 010100
+			//"xor $rd, $rs, $rt"
+			regfile[instruction->fields.rd] = instruction->aluout;
+			
+		}
+	}else
+	//Operation with op code 011100: subi
+	if (instruction->fields.op == 28){
+		//"subi $rt, $rs, imm"
+		regfile[instruction->fields.rt] = instruction->aluout;
+	}else
+	//Operation with op code 000110: lw
+	if (instruction->fields.op == 6){
+		//"lw $rt, imm ($rs)"
+		regfile[instruction->fields.rt] = instruction->memout;
+	}else
+	//Operation with op code 100010: jal
+	if (instruction->fields.op == 34){
+		//"jal imm"
+		regfile[31] = pc;
+		pc = instruction->fields.imm;
+	}
 }
 ////=========================Function Implementation END===============================
