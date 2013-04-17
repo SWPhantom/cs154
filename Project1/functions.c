@@ -301,7 +301,7 @@ void execute(InstInfo *instruction)
 	if (instruction->fields.op == 39){
 		//"bge $rs, $rt, imm"
 		instruction->aluout = instruction->fields.rs - instruction->fields.rt;
-		if(instruction->fields.rs >= instruction->fields.rt){
+		if(instruction->aluout >= 0){
 			pc += (instruction->fields.imm);
 		}
 	}
