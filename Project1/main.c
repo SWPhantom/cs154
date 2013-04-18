@@ -66,6 +66,7 @@ void print(InstInfo *inst, int count)
 		inst->signals.aluop, inst->signals.mw, inst->signals.mr, inst->signals.mtr, inst->signals.asrc,
 		inst->signals.btype, inst->signals.rdst, inst->signals.rw);
 	printf("ALU Result: %d\n\n",inst->aluout);
+	//printf("pc count: %d\n\n",pc); DEBUG
 	if (inst->signals.mr == 1)
 		printf("Mem Result: %d\n\n",inst->memout);
 	else

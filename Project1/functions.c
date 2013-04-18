@@ -300,7 +300,8 @@ void execute(InstInfo *instruction)
 	//Operation with op code 100111: bge
 	if (instruction->fields.op == 39){
 		//"bge $rs, $rt, imm"
-		instruction->aluout = instruction->fields.rs - instruction->fields.rt;
+		instruction->aluout = regfile[instruction->fields.rs] - regfile[instruction->fields.rt];
+		//printf("rs = %d\nrt = %d\n\n",instruction->fields.rs, instruction->fields.rt); DEBUG
 		if(instruction->aluout >= 0){
 			pc += (instruction->fields.imm);
 		}
