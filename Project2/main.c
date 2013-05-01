@@ -3,12 +3,21 @@
 #include <strings.h>
 #include "functions.h"
 
-InstInfo * pipelineInsts[5];
+InstInfo* pipelineInsts[5];
 
 int main(int argc, char *argv[])
 {
 	InstInfo curInst;
 	InstInfo *instPtr = &curInst;
+	
+	InstInfo nullInst;
+	InstInfo *nullPtr = &nullInst;
+	nullPtr->inst = 0;
+	int j;
+	for(j = 0; j < 4; ++j){
+		pipelineInsts[j] = nullPtr;
+	}
+	
 	int instnum = 0;
 	int maxpc;
 	FILE *program;
@@ -21,14 +30,36 @@ int main(int argc, char *argv[])
 	maxpc = load(argv[1]);
 	printLoad(maxpc);
 
+	/*//Quickly decode all future operations!
+	for(int i = ){
+		InstInfo* tempInst = ;
+		instruction->inst = instmem[pc];
+		decode();
+	}
+	*/
+
+	int count = 0;
 	while (pc <= maxpc)
 	{
 		fetch(instPtr);
-		decode(instPtr);
+		movePipeline();
+		decode(instPtr); //Now needs to be run non-sequentially. 
+		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
+		movePipeline();
+		count++;
 		execute(instPtr);
+		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
+		movePipeline();
+		count++;
 		memory(instPtr);
+		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
+		movePipeline();
+		count++;
 		writeback(instPtr);
-		print(instPtr,instnum++);
+		//print(instPtr,instnum++);
+		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
+		movePipeline();
+		count++;
 	}
 	
 	// put in your own variables
@@ -91,17 +122,17 @@ void printP2(InstInfo *inst0, InstInfo *inst1, InstInfo *inst2, InstInfo *inst3,
 		printf("Decode instruction: %s\n", inst1->string);
 	else
 		printf("Decode instruction: \n");
-	if(inst2->inst !=0)
+	if(inst2->inst != 0)
 		printf("Execute instruction: %s\n", inst2->string);
 	else
 		printf("Execute instruction: \n");
 
-	if(inst3->inst !=0)
+	if(inst3->inst != 0)
 		printf("Memory instruction: %s\n", inst3->string);
 	else
 		printf("Memory instruction: \n");
 
-	if(inst4->inst !=0)
+	if(inst4->inst != 0)
 		printf("Writeback instruction: %s\n", inst4->string);
 	else
 		printf("Writeback instruction: \n");

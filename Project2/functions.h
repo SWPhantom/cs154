@@ -50,6 +50,8 @@ void execute(InstInfo *);
 void memory(InstInfo *);
 void writeback(InstInfo *);
 
+void movePipieline();
+
 // this function is provided for you
 void print(InstInfo *, int);
 void printLoad(int);
