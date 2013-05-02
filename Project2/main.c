@@ -4,18 +4,19 @@
 #include "functions.h"
 
 InstInfo* pipelineInsts[5];
+InstInfo curInsts[10];
 
 int main(int argc, char *argv[])
 {
-	InstInfo curInst;
-	InstInfo *instPtr = &curInst;
+	InstInfo *instPtr = &curInsts[0];
 	
 	InstInfo nullInst;
 	InstInfo *nullPtr = &nullInst;
 	nullPtr->inst = 0;
 	int j;
-	for(j = 0; j < 4; ++j){
-		pipelineInsts[j] = nullPtr;
+	
+	for(j = 0; j < 10; ++j){
+		curInsts[j].inst = 0;
 	}
 	
 	int instnum = 0;
@@ -30,35 +31,36 @@ int main(int argc, char *argv[])
 	maxpc = load(argv[1]);
 	printLoad(maxpc);
 
-	/*//Quickly decode all future operations!
-	for(int i = ){
-		InstInfo* tempInst = ;
-		instruction->inst = instmem[pc];
-		decode();
+	//Points all of the pointers to just beyond the number of InstInfo objects.
+	for(j = 0; j < maxpc; ++j){
+		pipelineInsts[j] = &curInsts[j+maxpc];
 	}
-	*/
-
+	for(j = 0; j < maxpc; ++j){
+		curInsts[j].inst = ;
+	}
 	int count = 0;
 	while (pc <= maxpc)
 	{
-		fetch(instPtr);
-		movePipeline();
+		//if(){
+			fetch(instPtr);
+			movePipeline(nullPtr);
+		//}
 		decode(instPtr); //Now needs to be run non-sequentially. 
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		movePipeline();
+		movePipeline(nullPtr);
 		count++;
 		execute(instPtr);
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		movePipeline();
+		movePipeline(nullPtr);
 		count++;
 		memory(instPtr);
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		movePipeline();
+		movePipeline(nullPtr);
 		count++;
 		writeback(instPtr);
 		//print(instPtr,instnum++);
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		movePipeline();
+		movePipeline(nullPtr);
 		count++;
 	}
 	
@@ -77,7 +79,7 @@ int main(int argc, char *argv[])
 void printLoad(int max)
 {
 	int i;
-	for(i=0;i<max;i++)
+	for(i=0;i<=max;i++)
 		printf("%d\n",instmem[i]);
 }
 
@@ -146,5 +148,19 @@ void printP2(InstInfo *inst0, InstInfo *inst1, InstInfo *inst2, InstInfo *inst3,
 		printf("\n");
 	}
 	printf("\n");
+}
+
+/*
+ *Moves the pipeline along
+ */
+void movePipeline(InstInfo *empty){
+	
+	int i;
+	for(i = 4; i >= 1; --i){
+		pipelineInsts[i] = pipelineInsts[i-1];
+	}
+	if(instmem[pc] == 0){//If the next instruction is gone
+		pipelineInsts[0] = empty;
+	}
 }
 

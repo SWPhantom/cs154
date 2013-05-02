@@ -68,6 +68,7 @@ int load(char *filename)
 void fetch(InstInfo *instruction)
 {
 	instruction->inst = instmem[pc];
+	//pipelineInsts[0] = instruction;
 	++pc; //Increment the PC counter
 }
 
@@ -377,17 +378,4 @@ void writeback(InstInfo *instruction)
 	}
 }
 
-/*
- *Moves the pipiline along
- */
-void movePipeline(){
-	
-	int i;
-	for(i = 1; i <= 4; ++i){
-		pipelineInsts[i] = pipelineInsts[i-1];
-	}
-	if(instmem[pc] == 0){//If the next instruction is gone
-		pipelineInsts[0]->inst = 0;
-	}
-}
 ////=========================Function Implementation END===============================
