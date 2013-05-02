@@ -36,8 +36,8 @@ int load(char *filename)
 	//Opens the specified file.
 	program = fopen(filename, "r");
 	if (program == NULL) {//error if file can't be opened.
-		fprintf(stderr, "Can't open file!\n");
-		exit(1);
+	fprintf(stderr, "Can't open file!\n");
+	exit(1);
 	}
 
 	//Add the integer commands to the array.
@@ -306,10 +306,6 @@ void execute(InstInfo *instruction)
 		if(instruction->aluout >= 0){
 			pc += (instruction->fields.imm);
 		}
-	}else 
-	//Operation with op code 100100: j
-	if (instruction->fields.op == 36){
-		pc = instruction->fields.imm;
 	}
 }
 
@@ -332,9 +328,9 @@ void memory(InstInfo *instruction)
 }
 
 /* writeback
- *
- * If a register file is supposed to be written, write to it now
- */
+*
+* If a register file is supposed to be written, write to it now
+*/
 void writeback(InstInfo *instruction)
 {
 	if(instruction->fields.op == 48){
@@ -377,5 +373,4 @@ void writeback(InstInfo *instruction)
 		pc = instruction->fields.imm;
 	}
 }
-
 ////=========================Function Implementation END===============================
