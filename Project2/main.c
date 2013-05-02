@@ -41,10 +41,9 @@ int main(int argc, char *argv[])
 	int count = 0;
 	while (pc <= maxpc)
 	{
-		//if(){
-			fetch(instPtr);
-			movePipeline(nullPtr);
-		//}
+
+		fetch(instPtr);
+		movePipeline(nullPtr);
 		decode(instPtr); //Now needs to be run non-sequentially. 
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		movePipeline(nullPtr);
