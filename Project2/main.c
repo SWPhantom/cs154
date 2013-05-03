@@ -1,17 +1,8 @@
 /*
 INFO FOR WHOEVER WORKS ON THIS NEXT.
-
-I made a reasonable loop, I think. The problem now is that the object
-that the pointers in pipelineInsts is the same. I am having an issue
-in my helper function movePipeline, probably. 
-
-Maybe moving pointers by making an = sign makes EVERY POITER THE SAME
-THING... Which would be a problem.
-Maybe instead of assigning pointers to other pointers we can create
-and copy a new object every time... though I'm not sure if that is 
-easy, much less correct.
-
-
+The basics work now.
+TODO: Data forwarding!
+Test with "test1"
 */
 
 #include <stdio.h>
