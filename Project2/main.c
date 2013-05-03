@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 	}
 	
 	int count = 0;
+	int executions = 0;
 	while (pc <= maxpc+4)
 	{
 		moveObjPipeline();
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[4]->inst != 0){
 			writeback(pipelineInsts[4]);
+			++executions;
 		}
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		++count;
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
 	
 	// put in your own variables
 	printf("Cycles: %d\n", count );
-	//printf("Instructions Executed: %d\n", );
+	printf("Instructions Executed: %d\n", executions);
 	exit(0);
 }
 
