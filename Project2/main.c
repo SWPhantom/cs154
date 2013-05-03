@@ -45,23 +45,25 @@ int main(int argc, char *argv[])
 	{
 		moveObjPipeline();
 		fetch(pipelineInsts[0]);
+
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		if(pipelineInsts[1]->inst != 0){
-			decode(pipelineInsts[1]); //Now needs to be run non-sequentially. 
-		}
-		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		if(pipelineInsts[2]->inst != 0){
-			execute(pipelineInsts[2]);
+		if(pipelineInsts[4]->inst != 0){
+			writeback(pipelineInsts[4]);
+			++executions;
 		}
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[3]->inst != 0){
 			memory(pipelineInsts[3]);
 		}
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		if(pipelineInsts[4]->inst != 0){
-			writeback(pipelineInsts[4]);
-			++executions;
+		if(pipelineInsts[2]->inst != 0){
+			execute(pipelineInsts[2]);
 		}
+		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
+		if(pipelineInsts[1]->inst != 0){
+			decode(pipelineInsts[1]); //Now needs to be run non-sequentially. 
+		}		
+			
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		++count;
 	}
