@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	}
 
 	maxpc = load(argv[1]);
-	printLoad(maxpc);
+	//printLoad(maxpc);
 	
 	for(j = 0; j < 5; ++j){
 		pipelineInsts[j] = &curInsts[j];
