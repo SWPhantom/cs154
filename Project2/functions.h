@@ -50,6 +50,9 @@ void execute(InstInfo *);
 void memory(InstInfo *);
 void writeback(InstInfo *);
 
+void movePipeline(InstInfo newInst);
+void moveObjPipeline();
+
 // this function is provided for you
 void print(InstInfo *, int);
 void printLoad(int);

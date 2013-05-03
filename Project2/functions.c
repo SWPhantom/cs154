@@ -68,6 +68,7 @@ int load(char *filename)
 void fetch(InstInfo *instruction)
 {
 	instruction->inst = instmem[pc];
+	//printf("ADDRESS OF instmem[%d]: %d\n", pc, instruction->inst);
 	//pipelineInsts[0] = instruction;
 	++pc; //Increment the PC counter
 }

@@ -19,6 +19,7 @@ easy, much less correct.
 #include <strings.h>
 #include "functions.h"
 
+
 InstInfo* pipelineInsts[5];
 InstInfo curInsts[100];
 
@@ -27,10 +28,10 @@ int main(int argc, char *argv[])
 	InstInfo instruction;
 	InstInfo *instPtr = &instruction;
 	
-	InstInfo nullInst;
-	InstInfo *nullPtr = &nullInst;
-	nullPtr->inst = 0;
-
+	int j;
+	for(j = 0; j < 100; ++j){
+		curInsts[j].inst = 0;
+	}
 	int instnum = 0;
 	int maxpc;
 	FILE *program;
@@ -43,15 +44,14 @@ int main(int argc, char *argv[])
 	maxpc = load(argv[1]);
 	printLoad(maxpc);
 	
-	int j;
 	for(j = 0; j < 5; ++j){
-		pipelineInsts[j] = nullPtr;
+		pipelineInsts[j] = &curInsts[j];
 	}
 	
 	int count = 0;
 	while (pc <= maxpc+4)
 	{
-		movePipeline(curInsts[pc]);
+		moveObjPipeline();
 		fetch(pipelineInsts[0]);
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[1]->inst != 0){
@@ -138,12 +138,61 @@ void movePipeline(InstInfo newInst){
 	
 	int i;
 	for(i = 4; i >= 1; --i){
+		//printf("		Before at %d: %d\n",i, pipelineInsts[i]);
 		pipelineInsts[i] = pipelineInsts[i-1];
+	}
+	for(i = 4; i >= 1; --i){
+		//printf("				After at %d: %d\n",i, pipelineInsts[i]);
 	}
 	if(instmem[pc] == 0){//If the next instruction is gone
 		pipelineInsts[0] = &newInst;
 	}else{
 		pipelineInsts[0] = &newInst;
+	}
+}
+
+void moveObjPipeline(){
+		
+	int i;
+	for(i = 4; i >= 1; --i){
+		//printf("		Before at %d: %d\n",i, pipelineInsts[i]);
+		pipelineInsts[i]->inst = pipelineInsts[i-1]->inst;
+		
+		pipelineInsts[i]->signals.aluop = pipelineInsts[i-1]->signals.aluop;
+		pipelineInsts[i]->signals.mw = pipelineInsts[i-1]->signals.mw;
+		pipelineInsts[i]->signals.mr = pipelineInsts[i-1]->signals.mr;
+		pipelineInsts[i]->signals.mtr = pipelineInsts[i-1]->signals.mtr;
+		pipelineInsts[i]->signals.asrc = pipelineInsts[i-1]->signals.asrc;
+		pipelineInsts[i]->signals.btype = pipelineInsts[i-1]->signals.btype;
+		pipelineInsts[i]->signals.rdst = pipelineInsts[i-1]->signals.rdst;
+		pipelineInsts[i]->signals.rw = pipelineInsts[i-1]->signals.rw;
+		
+		pipelineInsts[i]->fields.rd = pipelineInsts[i-1]->fields.rd;
+		pipelineInsts[i]->fields.rs = pipelineInsts[i-1]->fields.rs;
+		pipelineInsts[i]->fields.rt = pipelineInsts[i-1]->fields.rt;
+		pipelineInsts[i]->fields.imm = pipelineInsts[i-1]->fields.imm;
+		pipelineInsts[i]->fields.op = pipelineInsts[i-1]->fields.op;
+		pipelineInsts[i]->fields.func = pipelineInsts[i-1]->fields.func;
+		
+		pipelineInsts[i]->pc = pipelineInsts[i-1]->pc;
+		pipelineInsts[i]->aluout = pipelineInsts[i-1]->aluout;
+		pipelineInsts[i]->memout = pipelineInsts[i-1]->memout;
+		pipelineInsts[i]->sourcereg = pipelineInsts[i-1]->sourcereg;
+		pipelineInsts[i]->targetreg = pipelineInsts[i-1]->targetreg;
+		pipelineInsts[i]->destreg = pipelineInsts[i-1]->destreg;
+		pipelineInsts[i]->destdata = pipelineInsts[i-1]->destdata;
+		int j;
+		for(j = 0; j < 30; ++j){
+			pipelineInsts[i]->string[j] = pipelineInsts[i-1]->string[j];
+		}
+		pipelineInsts[i]->s1data = pipelineInsts[i-1]->s1data;
+		pipelineInsts[i]->s2data = pipelineInsts[i-1]->s2data;
+		pipelineInsts[i]->input1 = pipelineInsts[i-1]->input1;
+		pipelineInsts[i]->input2 = pipelineInsts[i-1]->input2;
+		
+	}
+	if(instmem[pc] == 0){//If the next instruction is gone
+		pipelineInsts[0]->inst = 0;
 	}
 }
 
