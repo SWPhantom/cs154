@@ -63,6 +63,8 @@ extern int pc;
 extern int instmem[100];
 extern int datamem[1000];
 extern int regfile[32];
+extern int registerQueue[100];
+extern int regQueueCount;
 
 //this is for storing the instructions used during the stages of pipeline
 extern InstInfo * pipelineInsts[5];

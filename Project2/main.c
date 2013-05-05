@@ -44,8 +44,8 @@ int main(int argc, char *argv[])
 	while (pc <= maxpc+4)
 	{
 		moveObjPipeline();
-		fetch(pipelineInsts[0]);
 
+		int stall = checkDependencies(pipelineInsts[1]);
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[4]->inst != 0){
 			writeback(pipelineInsts[4]);
@@ -60,10 +60,12 @@ int main(int argc, char *argv[])
 			execute(pipelineInsts[2]);
 		}
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		if(pipelineInsts[1]->inst != 0){
+		if(pipelineInsts[1]->inst != 0 && stall==0){
 			decode(pipelineInsts[1]); //Now needs to be run non-sequentially. 
 		}		
-			
+		if (stall == 0){
+			fetch(pipelineInsts[0]);
+		}	
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		++count;
 	}
@@ -124,6 +126,16 @@ void printP2(InstInfo *inst0, InstInfo *inst1, InstInfo *inst2, InstInfo *inst3,
 		printf("\n");
 	}
 	printf("\n");
+	
+	/*
+	printf("RegisterQueue: ");
+	for (i=0; i<100; i++){
+		if (registerQueue[i] != 0){
+			printf("$%d, ", registerQueue[i]);
+		}
+	}
+	printf("\n\n");
+	*/
 }
 
 /*
@@ -149,45 +161,112 @@ void movePipeline(InstInfo newInst){
 void moveObjPipeline(){
 		
 	int i;
+	
+	//===========================================================
+	//Stalls must be detected in the DECODE stage in the following code. 
+	//If a stall is detected, do not move the data forward to the execute stage.
+	//When a stall is detected in the decode stage, the FETCH stage must also 
+	//be stalled.
+	//Execute Stage: i = 2
+	//Decode Stage:  i = 1
+	//Fetch Stage:   i = 0
+	//===========================================================
+	
+	int stall = 0;
 	for(i = 4; i >= 1; --i){
 		//printf("		Before at %d: %d\n",i, pipelineInsts[i]);
-		pipelineInsts[i]->inst = pipelineInsts[i-1]->inst;
 		
-		pipelineInsts[i]->signals.aluop = pipelineInsts[i-1]->signals.aluop;
-		pipelineInsts[i]->signals.mw = pipelineInsts[i-1]->signals.mw;
-		pipelineInsts[i]->signals.mr = pipelineInsts[i-1]->signals.mr;
-		pipelineInsts[i]->signals.mtr = pipelineInsts[i-1]->signals.mtr;
-		pipelineInsts[i]->signals.asrc = pipelineInsts[i-1]->signals.asrc;
-		pipelineInsts[i]->signals.btype = pipelineInsts[i-1]->signals.btype;
-		pipelineInsts[i]->signals.rdst = pipelineInsts[i-1]->signals.rdst;
-		pipelineInsts[i]->signals.rw = pipelineInsts[i-1]->signals.rw;
-		
-		pipelineInsts[i]->fields.rd = pipelineInsts[i-1]->fields.rd;
-		pipelineInsts[i]->fields.rs = pipelineInsts[i-1]->fields.rs;
-		pipelineInsts[i]->fields.rt = pipelineInsts[i-1]->fields.rt;
-		pipelineInsts[i]->fields.imm = pipelineInsts[i-1]->fields.imm;
-		pipelineInsts[i]->fields.op = pipelineInsts[i-1]->fields.op;
-		pipelineInsts[i]->fields.func = pipelineInsts[i-1]->fields.func;
-		
-		pipelineInsts[i]->pc = pipelineInsts[i-1]->pc;
-		pipelineInsts[i]->aluout = pipelineInsts[i-1]->aluout;
-		pipelineInsts[i]->memout = pipelineInsts[i-1]->memout;
-		pipelineInsts[i]->sourcereg = pipelineInsts[i-1]->sourcereg;
-		pipelineInsts[i]->targetreg = pipelineInsts[i-1]->targetreg;
-		pipelineInsts[i]->destreg = pipelineInsts[i-1]->destreg;
-		pipelineInsts[i]->destdata = pipelineInsts[i-1]->destdata;
-		int j;
-		for(j = 0; j < 30; ++j){
-			pipelineInsts[i]->string[j] = pipelineInsts[i-1]->string[j];
+		//When in the execute stage, check the decode stage to see if data is eligible
+		//to be passed up.
+		if (i==2){
+			stall = checkDependencies(pipelineInsts[i-1]);
 		}
-		pipelineInsts[i]->s1data = pipelineInsts[i-1]->s1data;
-		pipelineInsts[i]->s2data = pipelineInsts[i-1]->s2data;
-		pipelineInsts[i]->input1 = pipelineInsts[i-1]->input1;
-		pipelineInsts[i]->input2 = pipelineInsts[i-1]->input2;
-		
+		//If no stall had been detected previously, move pipeline along.
+		if (stall == 0){	
+			pipelineInsts[i]->inst = pipelineInsts[i-1]->inst;
+			
+			pipelineInsts[i]->signals.aluop = pipelineInsts[i-1]->signals.aluop;
+			pipelineInsts[i]->signals.mw = pipelineInsts[i-1]->signals.mw;
+			pipelineInsts[i]->signals.mr = pipelineInsts[i-1]->signals.mr;
+			pipelineInsts[i]->signals.mtr = pipelineInsts[i-1]->signals.mtr;
+			pipelineInsts[i]->signals.asrc = pipelineInsts[i-1]->signals.asrc;
+			pipelineInsts[i]->signals.btype = pipelineInsts[i-1]->signals.btype;
+			pipelineInsts[i]->signals.rdst = pipelineInsts[i-1]->signals.rdst;
+			pipelineInsts[i]->signals.rw = pipelineInsts[i-1]->signals.rw;
+			
+			pipelineInsts[i]->fields.rd = pipelineInsts[i-1]->fields.rd;
+			pipelineInsts[i]->fields.rs = pipelineInsts[i-1]->fields.rs;
+			pipelineInsts[i]->fields.rt = pipelineInsts[i-1]->fields.rt;
+			pipelineInsts[i]->fields.imm = pipelineInsts[i-1]->fields.imm;
+			pipelineInsts[i]->fields.op = pipelineInsts[i-1]->fields.op;
+			pipelineInsts[i]->fields.func = pipelineInsts[i-1]->fields.func;
+			
+			pipelineInsts[i]->pc = pipelineInsts[i-1]->pc;
+			pipelineInsts[i]->aluout = pipelineInsts[i-1]->aluout;
+			pipelineInsts[i]->memout = pipelineInsts[i-1]->memout;
+			pipelineInsts[i]->sourcereg = pipelineInsts[i-1]->sourcereg;
+			pipelineInsts[i]->targetreg = pipelineInsts[i-1]->targetreg;
+			pipelineInsts[i]->destreg = pipelineInsts[i-1]->destreg;
+			pipelineInsts[i]->destdata = pipelineInsts[i-1]->destdata;
+			int j;
+			for(j = 0; j < 30; ++j){
+				pipelineInsts[i]->string[j] = pipelineInsts[i-1]->string[j];
+			}
+			pipelineInsts[i]->s1data = pipelineInsts[i-1]->s1data;
+			pipelineInsts[i]->s2data = pipelineInsts[i-1]->s2data;
+			pipelineInsts[i]->input1 = pipelineInsts[i-1]->input1;
+			pipelineInsts[i]->input2 = pipelineInsts[i-1]->input2;
+		}
+		else{
+			pipelineInsts[2]->inst = 0;
+		}
 	}
 	if(instmem[pc] == 0){//If the next instruction is gone
 		pipelineInsts[0]->inst = 0;
 	}
+}
+
+//This function takes in an instruction in the decode stage and looks for dependencies 
+//in the later stages (execute, memory, writeback). 
+//Returns: 0 = No Dependencies Found 
+//         1 = Dependency Found
+int checkDependencies(InstInfo* decodeInst){
+	int dependencyDetected = 0;
+	//regRead1 and regRead2 represent registers that need to be checked ahead to make sure there is no 
+	//conflict with another instruction writing to the same register. A value of -1 means that this 
+	//variable is not in use (in I-format instructions, only one is used)
+	int regRead1 = -1; 
+	int regRead2 = -1;
+	
+	//Fill in regRead1 and regRead2. For R-format instructions, they are equal to rs and rt.
+	//For I-format instructions, only rs is compared.
+	if (decodeInst->fields.op == 48){
+		regRead1 = decodeInst->fields.rs;
+		regRead2 = decodeInst->fields.rt;
+	}
+	else{
+		switch (decodeInst->fields.op){
+			case 28: regRead1 = decodeInst->fields.rs; break; //subi
+			case 6: regRead1 = decodeInst->fields.rs; break; //lw
+			case 2: regRead1 = decodeInst->fields.rs; break; //sw
+			default: break;
+		}
+	}
+	
+	//$0 is not a variable that needs to be checked, so reset it back to -1.
+	if (regRead1 == 0) regRead1 = -1;
+	if (regRead2 == 0) regRead2 = -1;
+	
+	//Compare regRead1/2 to values in registerQueue. If there is a match, then a conflict 
+	//exists and there needs to be a stall. Break out of loop to prevent unnecessary calculations.
+	int i=0;
+	for (i=0; i<100; i++){
+		if (regRead1 == registerQueue[i] || regRead1 == registerQueue[i]){
+			//printf("STALL; regRead1: %d; regRead2: %d; regQueue[%d]: %d\n", regRead1,regRead2, i, registerQueue[i]);
+			dependencyDetected=1;
+			break;
+		}
+	}
+	return dependencyDetected;
 }
 
