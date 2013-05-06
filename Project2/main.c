@@ -317,8 +317,8 @@ int aluMux(int* rs, int* rt){
 		}
 		//Case 4: Both Execute and Decode are I-format
 		else{
-			if (memoryInst->fields.rt == executeInst->fields.rt){
-				*rt = memoryInst->aluout;
+			if (memoryInst->fields.rt == executeInst->fields.rs){
+				*rs = memoryInst->aluout;
 				output=2;
 			}
 		}	
