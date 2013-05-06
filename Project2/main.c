@@ -1,8 +1,7 @@
 /*
 INFO FOR WHOEVER WORKS ON THIS NEXT.
-The basics work now.
-TODO: Data forwarding!
-Test with "test1"
+Data forwarding and data hazards work now.
+TODO: Branching
 */
 
 #include <stdio.h>
@@ -43,34 +42,36 @@ int main(int argc, char *argv[])
 	int executions = 0;
 	while (pc <= maxpc+4)
 	{
+		//On a new cycle, look at a branch in the Decode stage (if it exists) 
+		//and determine whether it should be taken.
+		
+		//branchTaken is the imm field of the branch instruction. It is set to 0 if
+		//no branch action is taken or if a branch instruction doesn't exist.
+		int branchAction = 0; 
+		branchAction = checkBranch();
+		if (branchAction != 0){
+			pc -= branchAction; //...why does this work? 
+		}		
+		
 		int stall = moveObjPipeline();
-
-		//Returns 0 if there is no stall, 1 if there is a stall.
-		//int stall = checkDependencies(pipelineInsts[1]); 
-		if (stall != 0){
-			maxpc++; //Increase maxPC to account for a stall
-		}
-		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[4]->inst != 0){
 			writeback(pipelineInsts[4]);
 			++executions;
 		}
-		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[3]->inst != 0){
 			memory(pipelineInsts[3]);
 		}
-		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[2]->inst != 0){
 			execute(pipelineInsts[2]);
 		}
-		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		//If a stall was detected, don't try to decode the instruction again.
 		if(pipelineInsts[1]->inst != 0){
 			decode(pipelineInsts[1]); //Now needs to be run non-sequentially. 
 		}		
+		//Don't fetch another instruction if there was a stall
 		if ( stall == 0){
 			fetch(pipelineInsts[0]);
 		}
+		
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		++count;
 	}
@@ -80,8 +81,6 @@ int main(int argc, char *argv[])
 	printf("Instructions Executed: %d\n", executions);
 	exit(0);
 }
-
-
 
 /*
  * print out the loaded instructions.  This is to verify your loader
@@ -131,16 +130,6 @@ void printP2(InstInfo *inst0, InstInfo *inst1, InstInfo *inst2, InstInfo *inst3,
 		printf("\n");
 	}
 	printf("\n");
-	
-	/*
-	printf("RegisterQueue: ");
-	for (i=0; i<100; i++){
-		if (registerQueue[i] != 0){
-			printf("$%d, ", registerQueue[i]);
-		}
-	}
-	printf("\n\n");
-	*/
 }
 
 /*
@@ -163,6 +152,9 @@ void movePipeline(InstInfo newInst){
 	}
 }
 
+//This function moves the pipelong.
+//RETURNS: '0' if no stall is found
+//         '1' if stall is found
 int moveObjPipeline(){
 		
 	int i;
@@ -170,25 +162,17 @@ int moveObjPipeline(){
 	//===========================================================
 	//Stalls must be detected in the DECODE stage in the following code. 
 	//If a stall is detected, do not move the data forward to the execute stage.
-	//When a stall is detected in the decode stage, the FETCH stage must also 
-	//be stalled.
-	//Execute Stage: i = 2
-	//Decode Stage:  i = 1
-	//Fetch Stage:   i = 0
 	//===========================================================
 	
 	int stall = 0;
 	for(i = 4; i >= 1; --i){
-		//printf("		Before at %d: %d\n",i, pipelineInsts[i]);
-		
-		
-		//When in the execute stage, check the decode stage to see if data is eligible
-		//to be passed up.
+		//When in the EXECUTE stage, check the decode stage to see if data is eligible
+		//to be passed up. If a dependency is found, set a flag to stall the pipeline.
 		if (i==2){
 			stall = checkDependencies(pipelineInsts[i-1]);
 		}
 		
-		//If no stall had been detected previously, move pipeline along.
+		//If no stall was detected, move the pipeline along.
 		if (stall == 0){	
 			pipelineInsts[i]->inst = pipelineInsts[i-1]->inst;
 			
@@ -223,81 +207,118 @@ int moveObjPipeline(){
 			pipelineInsts[i]->s2data = pipelineInsts[i-1]->s2data;
 			pipelineInsts[i]->input1 = pipelineInsts[i-1]->input1;
 			pipelineInsts[i]->input2 = pipelineInsts[i-1]->input2;
-		
 		}
+		//If a stall was detected, insert a nop bubble into the execute stage
 		else{
 			pipelineInsts[2]->inst = 0; //Insert a nop bubble
+			pipelineInsts[2]->fields.rd = 0;
+			pipelineInsts[2]->fields.rs = 0;
+			pipelineInsts[2]->fields.rt = 0;
+			pipelineInsts[2]->fields.imm = 0;
+			pipelineInsts[2]->fields.op = 0;
+			pipelineInsts[2]->fields.func = 0;
 		}
-	}
-	if(instmem[pc] == 0){//If the next instruction is gone
-		pipelineInsts[0]->inst = 0;
 	}
 	return stall;
 }
 
-//This function takes in an instruction in the decode stage and looks for dependencies 
-//in the later stages (execute, memory, writeback). 
+//===========================================
+//This function takes in an instruction in the decode stage and looks forward to the 
+//execute stage to see if there is a data dependency between them. This solves the specific 
+//case where a lw or sw is followed by an instruction containing a dependent register. 
+//This specific case is tested for in the DATA HAZARDS test cases.
 //Returns: 0 = No Dependencies Found 
 //         1 = Dependency Found
+//===========================================
 int checkDependencies(InstInfo* decodeInst){
 	int dependencyDetected = 0;
 
-	//If the instruction in the decode stage is R-formatted and there is no nop bubble in execute..
-	if (decodeInst->fields.op == 48 && pipelineInsts[2]->inst != 0){
-		//If the instruction in the execute stage is a lw or sw...
-		if (pipelineInsts[2]->fields.op == 6 || pipelineInsts[2]->fields.op == 2){		
-			//Check to see if there is a conflict between these operations
-			if (pipelineInsts[2]->fields.rt == decodeInst->fields.rs || 
-				pipelineInsts[2]->fields.rt == decodeInst->fields.rt)
-			{
-				dependencyDetected=1;
-			}		
+	//The following blocks of code will compare the decode instruction with the execute 
+	//instruction. There are two cases to account for: one where the decode stage is an R-
+	//format instruction and another where it is a I-format instruction. The cases are very
+	//similar, the only difference being that I-format instruction does not check its rt register.
+	
+	//First, make sure this is not a nop bubble.
+	if (pipelineInsts[2]->inst != 0){
+		//CASE 1: R-Format instruction in decode stage
+		if (decodeInst->fields.op == 48){
+			//If the instruction in the execute stage is a lw or sw...
+			if (pipelineInsts[2]->fields.op == 6 || pipelineInsts[2]->fields.op == 2){		
+				//Check to see if there is a conflict between these two instructions
+				if (pipelineInsts[2]->fields.rt == decodeInst->fields.rs || 
+					pipelineInsts[2]->fields.rt == decodeInst->fields.rt)
+				{
+					dependencyDetected=1;
+				}		
+			}
+		}
+		//Case 2: I-Format instruction in decode stage
+		else{
+			if (decodeInst->fields.op == 28 || decodeInst->fields.op == 39){ //subi and bge
+				//If the instruction in the execute stage is a lw or sw...
+				if (pipelineInsts[2]->fields.op == 6 || pipelineInsts[2]->fields.op == 2){		
+					//Check to see if there is a conflict between these two instructions
+					if (pipelineInsts[2]->fields.rt == decodeInst->fields.rs)
+					{
+						dependencyDetected=1;
+					}		
+				}			
+			}
 		}
 	}
 	return dependencyDetected;
 }
 
-int decodeMux(int input){
-	InstInfo* decodeInst = pipelineInsts[1];
-	InstInfo* executeInst = pipelineInsts[3];
+//==========================================
+//Compares the previous execute function and the current execute function (the
+//memory instruction still contains the aluout of the previous execute function, so 
+//that represents it). If the current execute function relies on data from the past 
+//execute function, then forward the data from the previous aluout to the current
+//relevant register. This function solves the DATA FORWARDING test cases.
+//RETURNS: If there is no dependency found, a 0 is returned. If a dependency was found,
+//         then it returns '1' if rs was dependent and '2' if rt was dependent.
+//===========================================
+int aluMux(int* rs, int* rt){
+	InstInfo* executeInst = pipelineInsts[2];
+	InstInfo* memoryInst = pipelineInsts[3];
 	int output = 0;
-	if (input == 1){
-		printf("Decode mux switched on\n");
-		//Both Execute and Decode are R-format
-		if (decodeInst->fields.op == 48 && executeInst->fields.op == 48){
-			if (executeInst->fields.rd == decodeInst->fields.rs){
-				decodeInst->fields.rs = executeInst->aluout;
+	//The following block compares the two instructions to see if there is a data
+	//dependency between them. There are 4 cases to check for based on the instruction
+	//types.
+	if (memoryInst->inst != 0){ //First make sure this is not a nop bubble
+		//Case 1: Both Execute and Decode are R-format
+		if (executeInst->fields.op == 48 && memoryInst->fields.op == 48){
+			if (memoryInst->fields.rd == executeInst->fields.rs){
+				*rs = memoryInst->aluout;
 				output = 1;
 			}
-			if (executeInst->fields.rd == decodeInst->fields.rt){
-				decodeInst->fields.rt = executeInst->aluout;
+			if (memoryInst->fields.rd == executeInst->fields.rt){
+				*rt = memoryInst->aluout;
 				output = 2;
 			}
 		}
-		//Execute is R-format, Decode is I format
+		//Case 2: Execute is R-format, Decode is I format
+		else if (memoryInst->fields.op == 48){
+			if (memoryInst->fields.rd == executeInst->fields.rs){
+				*rs = memoryInst->aluout;
+				output=1;
+			}
+		}
+		//Case 3: Execute is I-format, Decode is R frmat
 		else if (executeInst->fields.op == 48){
-			if (executeInst->fields.rd == decodeInst->fields.rs){
-				decodeInst->fields.rs = executeInst->aluout;
+			if (memoryInst->fields.rt == executeInst->fields.rs){
+				*rs = memoryInst->aluout;
 				output=1;
 			}
-		}
-		//Execute is I-format, Decode is R frmat
-		else if (decodeInst->fields.op == 48){
-			if (executeInst->fields.rt == decodeInst->fields.rs){
-				decodeInst->fields.rs = executeInst->aluout;
-				output=1;
-				//printf("Assigned aluout; aluout: %d\n", executeInst->aluout);
-			}
-			if (executeInst->fields.rt == decodeInst->fields.rt){
-				decodeInst->fields.rt = executeInst->aluout;
+			if (memoryInst->fields.rt == executeInst->fields.rt){
+				*rt = memoryInst->aluout;
 				output=2;
-				//printf("Assigned aluout; aluout: %d\n", executeInst->aluout);
 			}
 		}
-		//Both Execute and Decode are I-format
+		//Case 4: Both Execute and Decode are I-format
 		else{
-			if (executeInst->fields.rt == decodeInst->fields.rt){
-				decodeInst->fields.rt = executeInst->aluout;
+			if (memoryInst->fields.rt == executeInst->fields.rt){
+				*rt = memoryInst->aluout;
 				output=2;
 			}
 		}	
@@ -305,44 +326,133 @@ int decodeMux(int input){
 	return output;
 }
 
-int aluMux(int* rs, int* rt){
-	InstInfo* decodeInst = pipelineInsts[2];
-	InstInfo* executeInst = pipelineInsts[3];
+//===============================================
+//This function will confirm whether a branch should be taken
+//at the Decode stage. If a data dependency is detected, then forward 
+//that data into the Decode stage for calculation.
+//RETURNS: 0 if no action
+//		   1 if branch taken
+//===============================================
+int checkBranch(){
+	int action = 0;
+	//Check if a branch instruction exists in Decode stage
+	if (pipelineInsts[1]->fields.op == 39){ //bge
+		InstInfo* branch = pipelineInsts[1];
+		
+		//Create copies of register values so we don't overwrite the real ones
+		int rsCpy = regfile[branch->fields.rs];
+		int rtCpy = regfile[branch->fields.rt];
+		int* rs = &rsCpy;
+		int* rt = &rtCpy;
+		//printf("Checking branch in DECODE section\n");
+		//Check for dependencies in Execute and Memory stages(Writeback should 
+		//already be taken care of). If a dependency is found, forward data.
+		action = checkBranchWithExecute(*rs, *rt);
+		action = checkBranchWithMemory(*rs, *rt);
+		
+		//int rt = regfile[branch->fields.rt];
+		//int rs = regfile[branch->fields.rs];
+		//printf("rt: %d, rs: %d\n", rt, rs);
+		if (*rs >= *rt){
+			//printf("Branch action taken\n");
+			action = branch->fields.imm;
+			pipelineInsts[0]->inst = 0; //Insert a nop bubble
+			pipelineInsts[0]->fields.rd = 0;
+			pipelineInsts[0]->fields.rs = 0;
+			pipelineInsts[0]->fields.rt = 0;
+			pipelineInsts[0]->fields.imm = 0;
+			pipelineInsts[0]->fields.op = 0;
+			pipelineInsts[0]->fields.func = 0;
+		}
+		
+	}
+	return action;
+}
+
+
+//===============================================
+//This function will checks for a dependency between the Decode
+//stage and the Execute stage. If a dependency is found, it will 
+//forward the data from Execute -> Decode using aluout.
+//RETURNS: 0 if no dependency found
+//		   1 if dependency found
+//===============================================
+int checkBranchWithExecute(int* rs, int* rt){
+	InstInfo* decodeInst = pipelineInsts[1];
+	InstInfo* executeInst = pipelineInsts[2];
 	int output = 0;
-	if (executeInst->inst != 0){ //Check to make sure this is not a nop bubble
-		//Both Execute and Decode are R-format
-		if (decodeInst->fields.op == 48 && executeInst->fields.op == 48){
+	//The following block compares the two instructions to see if there is a data
+	//dependency between them. There are 2 cases to check for based on the instruction
+	//types.
+	if (executeInst->inst != 0){ //First make sure this is not a nop bubble
+		//Case 1: Execute is in R-format
+		if (executeInst->fields.op == 48){
 			if (executeInst->fields.rd == decodeInst->fields.rs){
+				//printf("Branch dependency found with Execute\n");
 				*rs = executeInst->aluout;
-				output = 1;
+				output=1;
 			}
 			if (executeInst->fields.rd == decodeInst->fields.rt){
+				//printf("Branch dependency found with Execute\n");
 				*rt = executeInst->aluout;
-				output = 2;
-			}
-		}
-		//Execute is R-format, Decode is I format
-		else if (executeInst->fields.op == 48){
-			if (executeInst->fields.rd == decodeInst->fields.rs){
-				*rs = executeInst->aluout;
 				output=1;
 			}
 		}
-		//Execute is I-format, Decode is R frmat
-		else if (decodeInst->fields.op == 48){
-			if (executeInst->fields.rt == decodeInst->fields.rs){
-				*rs = executeInst->aluout;
-				output=1;
-			}
-			if (executeInst->fields.rt == decodeInst->fields.rt){
-				*rt = executeInst->aluout;
-				output=2;
-			}
-		}
-		//Both Execute and Decode are I-format
+		//Case 2: Execute is in I-format
 		else{
 			if (executeInst->fields.rt == decodeInst->fields.rt){
 				*rt = executeInst->aluout;
+				//printf("Branch dependency found with Execute\n");
+				output=2;
+			}
+			if (executeInst->fields.rt == decodeInst->fields.rs){
+				*rs = executeInst->aluout;
+				//printf("Branch dependency found with Execute\n");
+				output=2;
+			}
+		}	
+	}
+	return output;
+}
+
+//===============================================
+//This function will confirm whether a branch should be taken
+//at the Decode stage. If a data dependency is detected, then forward 
+//that data into the Decode stage for calculation.
+//RETURNS: 0 if no action
+//		   1 if branch taken
+//===============================================
+int checkBranchWithMemory(int* rs, int* rt){
+	InstInfo* decodeInst = pipelineInsts[1];
+	InstInfo* memoryInst = pipelineInsts[3];
+	int output = 0;
+	//The following block compares the two instructions to see if there is a data
+	//dependency between them. There are 2 cases to check for based on the instruction
+	//types.
+	if (memoryInst->inst != 0){ //First make sure this is not a nop bubble
+		//Case 1: Memory is in R-format
+		if (memoryInst->fields.op == 48){
+			if (memoryInst->fields.rd == decodeInst->fields.rs){
+				//printf("Branch dependency found with Execute\n");
+				*rs = memoryInst->aluout;
+				output=1;
+			}
+			if (memoryInst->fields.rd == decodeInst->fields.rt){
+				//printf("Branch dependency found with Execute\n");
+				*rt = memoryInst->aluout;
+				output=1;
+			}
+		}
+		//Case 2: Memory is in I-format
+		else{
+			if (memoryInst->fields.rt == decodeInst->fields.rt){
+				*rt = memoryInst->aluout;
+				//printf("Branch dependency found with Execute\n");
+				output=2;
+			}
+			if (memoryInst->fields.rt == decodeInst->fields.rs){
+				*rs = memoryInst->aluout;
+				//printf("Branch dependency found with Execute\n");
 				output=2;
 			}
 		}	

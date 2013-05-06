@@ -128,12 +128,6 @@ void decode(InstInfo *instruction)
 			instruction->fields.rd, instruction->fields.rs,
 			instruction->fields.rt);
 			instruction->destreg = instruction->fields.rd;
-			for (i=0; i<100; i++){
-				if (registerQueue[i]==0){
-					registerQueue[i] = instruction->fields.rd;
-					break;
-				}
-			}
 		}else
 		//Or
 		if(instruction->fields.func == 48){	//Check to see if the func is 110000
@@ -149,12 +143,6 @@ void decode(InstInfo *instruction)
 			instruction->fields.rd, instruction->fields.rs,
 			instruction->fields.rt);
 			instruction->destreg = instruction->fields.rd;
-			for (i=0; i<100; i++){
-				if (registerQueue[i]==0){
-					registerQueue[i] = instruction->fields.rd;
-					break;
-				}
-			}
 		}else
 		//SLT
 		if(instruction->fields.func == 15){	//Check to see if the func is 001111
@@ -170,12 +158,6 @@ void decode(InstInfo *instruction)
 			instruction->fields.rd, instruction->fields.rs,
 			instruction->fields.rt);
 			instruction->destreg = instruction->fields.rd;
-			for (i=0; i<100; i++){
-				if (registerQueue[i]==0){
-					registerQueue[i] = instruction->fields.rd;
-					break;
-				}
-			}
 		}else
 		//XOR
 		if(instruction->fields.func == 20){	//Check to see if the func is 010100
@@ -191,12 +173,6 @@ void decode(InstInfo *instruction)
 			instruction->fields.rd, instruction->fields.rs,
 			instruction->fields.rt);
 			instruction->destreg = instruction->fields.rd;
-			for (i=0; i<100; i++){
-				if (registerQueue[i]==0){
-					registerQueue[i] = instruction->fields.rd;
-					break;
-				}
-			}
 		}
 	}else
 	//Operation with op code 011100: subi
@@ -211,12 +187,6 @@ void decode(InstInfo *instruction)
 		instruction->signals.rw = 1;
 		sprintf(instruction->string,"subi $%d, $%d, %d",instruction->fields.rt, instruction->fields.rs, instruction->fields.imm);
 		instruction->destreg = instruction->fields.rt;
-		for (i=0; i<100; i++){
-			if (registerQueue[i]==0){
-				registerQueue[i] = instruction->fields.rt;
-				break;
-			}
-		}
 	}else
 	//Operation with op code 000110: lw
 	if (instruction->fields.op == 6){
@@ -230,12 +200,6 @@ void decode(InstInfo *instruction)
 		instruction->signals.rw = 1;
 		sprintf(instruction->string,"lw $%d, %d ($%d)",instruction->fields.rt, instruction->fields.imm, instruction->fields.rs);
 		instruction->destreg = instruction->fields.rt;
-		for (i=0; i<100; i++){
-			if (registerQueue[i]==0){
-				registerQueue[i] = instruction->fields.rt;
-				break;
-			}
-		}
 	}else
 	//Operation with op code 000110: sw
 	if (instruction->fields.op == 2){
@@ -249,12 +213,6 @@ void decode(InstInfo *instruction)
 		instruction->signals.rw = 0;
 		sprintf(instruction->string,"sw $%d, %d ($%d)",instruction->fields.rt, instruction->fields.imm, instruction->fields.rs);
 		instruction->destdata = instruction->fields.rt;	//destdata = Mem[rs+imm]
-		for (i=0; i<100; i++){
-			if (registerQueue[i]==0){
-				registerQueue[i] = instruction->fields.rt;
-				break;
-			}
-		}
 	}else
 	//Operation with op code 100111: bge
 	if (instruction->fields.op == 39){
@@ -397,74 +355,32 @@ void writeback(InstInfo *instruction)
 		if(instruction->fields.func == 10){	//Check to see if the func is 001010
 			//"add $rd, $rs, $rt"
 			regfile[instruction->fields.rd] = instruction->aluout;
-			for (i=0; i<100; i++){
-				if (registerQueue[i] == instruction->fields.rd){
-					registerQueue[i]=0;
-					break;
-				}
-			}
-			regQueueCount--;
 		}else
 		//Or
 		if(instruction->fields.func == 48){	//Check to see if the func is 110000
 			//"or $rd, $rs, $rt"
 			regfile[instruction->fields.rd] = instruction->aluout;
-			for (i=0; i<100; i++){
-				if (registerQueue[i] == instruction->fields.rd){
-					registerQueue[i]=0;
-					break;
-				}
-			}	
-			regQueueCount--;
 		}else
 		//SLT
 		if(instruction->fields.func == 15){	//Check to see if the func is 001111
 			//"slt $rd, $rs, $rt"
 			regfile[instruction->fields.rd] = instruction->aluout;
-			for (i=0; i<100; i++){
-				if (registerQueue[i] == instruction->fields.rd){
-					registerQueue[i]=0;
-					break;
-				}
-			}
-			regQueueCount--;
 		}else
 		//XOR
 		if(instruction->fields.func == 20){	//Check to see if the func is 010100
 			//"xor $rd, $rs, $rt"
-			regfile[instruction->fields.rd] = instruction->aluout;
-			for (i=0; i<100; i++){
-				if (registerQueue[i] == instruction->fields.rd){
-					registerQueue[i]=0;
-					break;
-				}
-			}
-			regQueueCount--;			
+			regfile[instruction->fields.rd] = instruction->aluout;			
 		}
 	}else
 	//Operation with op code 011100: subi
 	if (instruction->fields.op == 28){
 		//"subi $rt, $rs, imm"
 		regfile[instruction->fields.rt] = instruction->aluout;
-		for (i=0; i<100; i++){
-			if (registerQueue[i] == instruction->fields.rt){
-				registerQueue[i]=0;
-				break;
-			}
-		}
-		regQueueCount--;
 	}else
 	//Operation with op code 000110: lw
 	if (instruction->fields.op == 6){
 		//"lw $rt, imm ($rs)"
 		regfile[instruction->fields.rt] = instruction->memout;
-		for (i=0; i<100; i++){
-			if (registerQueue[i] == instruction->fields.rt){
-				registerQueue[i]=0;
-				break;
-			}
-		}
-		regQueueCount--;
 	}else
 	//Operation with op code 100010: jal
 	if (instruction->fields.op == 34){
