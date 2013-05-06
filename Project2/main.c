@@ -1,7 +1,7 @@
 /*
 INFO FOR WHOEVER WORKS ON THIS NEXT.
-Data forwarding and data hazards work now.
-TODO: Branching
+Some branching works now.
+TODO: Branching offset is not always correct. See line 53
 */
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 		int branchAction = 0; 
 		branchAction = checkBranch();
 		if (branchAction != 0){
-			pc -= branchAction; //...why does this work? 
+			pc -= branchAction; //...why does this work? 'pc += branchAction' did not work.
 		}		
 		
 		int stall = moveObjPipeline();
@@ -274,7 +274,8 @@ int checkDependencies(InstInfo* decodeInst){
 //memory instruction still contains the aluout of the previous execute function, so 
 //that represents it). If the current execute function relies on data from the past 
 //execute function, then forward the data from the previous aluout to the current
-//relevant register. This function solves the DATA FORWARDING test cases.
+//relevant register. This function solves the DATA FORWARDING test cases and is called
+//at the beginning of execute().
 //RETURNS: If there is no dependency found, a 0 is returned. If a dependency was found,
 //         then it returns '1' if rs was dependent and '2' if rt was dependent.
 //===========================================
@@ -286,7 +287,7 @@ int aluMux(int* rs, int* rt){
 	//dependency between them. There are 4 cases to check for based on the instruction
 	//types.
 	if (memoryInst->inst != 0){ //First make sure this is not a nop bubble
-		//Case 1: Both Execute and Decode are R-format
+		//Case 1: Both Execute and Memory are R-format
 		if (executeInst->fields.op == 48 && memoryInst->fields.op == 48){
 			if (memoryInst->fields.rd == executeInst->fields.rs){
 				*rs = memoryInst->aluout;
@@ -297,14 +298,14 @@ int aluMux(int* rs, int* rt){
 				output = 2;
 			}
 		}
-		//Case 2: Execute is R-format, Decode is I format
+		//Case 2: Execute is R-format, Memory is I format
 		else if (memoryInst->fields.op == 48){
 			if (memoryInst->fields.rd == executeInst->fields.rs){
 				*rs = memoryInst->aluout;
 				output=1;
 			}
 		}
-		//Case 3: Execute is I-format, Decode is R frmat
+		//Case 3: Execute is I-format, Memory is R frmat
 		else if (executeInst->fields.op == 48){
 			if (memoryInst->fields.rt == executeInst->fields.rs){
 				*rs = memoryInst->aluout;
@@ -315,7 +316,7 @@ int aluMux(int* rs, int* rt){
 				output=2;
 			}
 		}
-		//Case 4: Both Execute and Decode are I-format
+		//Case 4: Both Execute and Memory are I-format
 		else{
 			if (memoryInst->fields.rt == executeInst->fields.rs){
 				*rs = memoryInst->aluout;
@@ -347,9 +348,11 @@ int checkBranch(){
 		//printf("Checking branch in DECODE section\n");
 		//Check for dependencies in Execute and Memory stages(Writeback should 
 		//already be taken care of). If a dependency is found, forward data.
-		action = checkBranchWithExecute(*rs, *rt);
-		action = checkBranchWithMemory(*rs, *rt);
-		
+		action = checkBranchWithExecute(rs, rt);
+		//If data has been forwarded from execute, no need to forward from memory
+		if (action==0){
+			action = checkBranchWithMemory(rs, rt);
+		}
 		//int rt = regfile[branch->fields.rt];
 		//int rs = regfile[branch->fields.rs];
 		//printf("rt: %d, rs: %d\n", rt, rs);
@@ -363,8 +366,20 @@ int checkBranch(){
 			pipelineInsts[0]->fields.imm = 0;
 			pipelineInsts[0]->fields.op = 0;
 			pipelineInsts[0]->fields.func = 0;
-		}
-		
+		}	
+	}
+	//TODO: Later, if we need to store the value of jal into register 31, this block should be split up 
+	//      and jal should be given its own block that stores return address at register 31.
+	else if (pipelineInsts[1]->fields.op == 34 || pipelineInsts[1]->fields.op == 36){ //j and jal
+		InstInfo* branch = pipelineInsts[1];
+		action = branch->fields.imm;
+		pipelineInsts[0]->inst = 0; //Insert a nop bubble
+		pipelineInsts[0]->fields.rd = 0;
+		pipelineInsts[0]->fields.rs = 0;
+		pipelineInsts[0]->fields.rt = 0;
+		pipelineInsts[0]->fields.imm = 0;
+		pipelineInsts[0]->fields.op = 0;
+		pipelineInsts[0]->fields.func = 0;	
 	}
 	return action;
 }
@@ -416,11 +431,11 @@ int checkBranchWithExecute(int* rs, int* rt){
 }
 
 //===============================================
-//This function will confirm whether a branch should be taken
-//at the Decode stage. If a data dependency is detected, then forward 
-//that data into the Decode stage for calculation.
-//RETURNS: 0 if no action
-//		   1 if branch taken
+//This function will checks for a dependency between the Decode
+//stage and the Memory stage. If a dependency is found, it will 
+//forward the data from Memory -> Decode using aluout.
+//RETURNS: 0 if no dependency found
+//		   1 if dependency found
 //===============================================
 int checkBranchWithMemory(int* rs, int* rt){
 	InstInfo* decodeInst = pipelineInsts[1];
@@ -429,6 +444,7 @@ int checkBranchWithMemory(int* rs, int* rt){
 	//The following block compares the two instructions to see if there is a data
 	//dependency between them. There are 2 cases to check for based on the instruction
 	//types.
+				
 	if (memoryInst->inst != 0){ //First make sure this is not a nop bubble
 		//Case 1: Memory is in R-format
 		if (memoryInst->fields.op == 48){
@@ -443,6 +459,7 @@ int checkBranchWithMemory(int* rs, int* rt){
 				output=1;
 			}
 		}
+		
 		//Case 2: Memory is in I-format
 		else{
 			if (memoryInst->fields.rt == decodeInst->fields.rt){
@@ -455,7 +472,9 @@ int checkBranchWithMemory(int* rs, int* rt){
 				//printf("Branch dependency found with Execute\n");
 				output=2;
 			}
-		}	
+		}
+		
 	}
+	
 	return output;
 }
