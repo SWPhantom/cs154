@@ -51,9 +51,8 @@ void memory(InstInfo *);
 void writeback(InstInfo *);
 
 void movePipeline(InstInfo newInst);
-void moveObjPipeline();
+int moveObjPipeline();
 int checkDependencies(InstInfo* decodeInst);
-int decodeMux(int input);
 
 // this function is provided for you
 void print(InstInfo *, int);
@@ -65,8 +64,6 @@ extern int pc;
 extern int instmem[100];
 extern int datamem[1000];
 extern int regfile[32];
-extern int registerQueue[100];
-extern int regQueueCount;
 
 //this is for storing the instructions used during the stages of pipeline
 extern InstInfo * pipelineInsts[5];
