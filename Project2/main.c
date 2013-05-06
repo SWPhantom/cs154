@@ -47,10 +47,11 @@ int main(int argc, char *argv[])
 		
 		//branchTaken is the imm field of the branch instruction. It is set to 0 if
 		//no branch action is taken or if a branch instruction doesn't exist.
-		int branchAction = 0; 
-		branchAction = checkBranch();
-		if (branchAction != 0){
-			pc -= branchAction; //...why does this work? 'pc += branchAction' did not work.
+		int branchTarget = 0; 
+		branchTarget = checkBranch();
+		if (branchTarget != 0){//
+			//printf("branchTarget: %d\n", branchTarget);
+			pc -= branchTarget; //...why does this work? 'pc += branchTarget' did not work.
 		}		
 		
 		int stall = moveObjPipeline();
@@ -405,12 +406,12 @@ int checkBranchWithExecute(int* rs, int* rt){
 			if (executeInst->fields.rd == decodeInst->fields.rs){
 				//printf("Branch dependency found with Execute\n");
 				*rs = executeInst->aluout;
-				output=1;
+				output=decodeInst->fields.imm;
 			}
 			if (executeInst->fields.rd == decodeInst->fields.rt){
 				//printf("Branch dependency found with Execute\n");
 				*rt = executeInst->aluout;
-				output=1;
+				output=decodeInst->fields.imm;
 			}
 		}
 		//Case 2: Execute is in I-format
@@ -418,12 +419,12 @@ int checkBranchWithExecute(int* rs, int* rt){
 			if (executeInst->fields.rt == decodeInst->fields.rt){
 				*rt = executeInst->aluout;
 				//printf("Branch dependency found with Execute\n");
-				output=2;
+				output=decodeInst->fields.imm;
 			}
 			if (executeInst->fields.rt == decodeInst->fields.rs){
 				*rs = executeInst->aluout;
 				//printf("Branch dependency found with Execute\n");
-				output=2;
+				output=decodeInst->fields.imm;
 			}
 		}	
 	}
@@ -451,12 +452,12 @@ int checkBranchWithMemory(int* rs, int* rt){
 			if (memoryInst->fields.rd == decodeInst->fields.rs){
 				//printf("Branch dependency found with Execute\n");
 				*rs = memoryInst->aluout;
-				output=1;
+				output=decodeInst->fields.imm;
 			}
 			if (memoryInst->fields.rd == decodeInst->fields.rt){
 				//printf("Branch dependency found with Execute\n");
 				*rt = memoryInst->aluout;
-				output=1;
+				output=decodeInst->fields.imm;
 			}
 		}
 		
@@ -465,12 +466,12 @@ int checkBranchWithMemory(int* rs, int* rt){
 			if (memoryInst->fields.rt == decodeInst->fields.rt){
 				*rt = memoryInst->aluout;
 				//printf("Branch dependency found with Execute\n");
-				output=2;
+				output=decodeInst->fields.imm;
 			}
 			if (memoryInst->fields.rt == decodeInst->fields.rs){
 				*rs = memoryInst->aluout;
 				//printf("Branch dependency found with Execute\n");
-				output=2;
+				output=decodeInst->fields.imm;
 			}
 		}
 		
