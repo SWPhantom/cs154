@@ -45,7 +45,8 @@ int main(int argc, char *argv[])
 	{
 		moveObjPipeline();
 
-		int stall = checkDependencies(pipelineInsts[1]);
+		//Returns 0 if there is no stall, 1 if there is a stall.
+		int stall = checkDependencies(pipelineInsts[1]); 
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		if(pipelineInsts[4]->inst != 0){
 			writeback(pipelineInsts[4]);
@@ -60,12 +61,15 @@ int main(int argc, char *argv[])
 			execute(pipelineInsts[2]);
 		}
 		//printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
-		if(pipelineInsts[1]->inst != 0 && stall==0){
+		//If a stall was detected, don't try to decode the instruction again.
+		if(pipelineInsts[1]->inst != 0){
 			decode(pipelineInsts[1]); //Now needs to be run non-sequentially. 
+			//decodeMux(stall);
 		}		
-		if (stall == 0){
+		//If stall was detected, don't fetch another instruction.
+		//if (stall == 0){
 			fetch(pipelineInsts[0]);
-		}	
+		//}	
 		printP2(pipelineInsts[0],pipelineInsts[1],pipelineInsts[2],pipelineInsts[3],pipelineInsts[4], count);
 		++count;
 	}
@@ -176,13 +180,15 @@ void moveObjPipeline(){
 	for(i = 4; i >= 1; --i){
 		//printf("		Before at %d: %d\n",i, pipelineInsts[i]);
 		
+		/*
 		//When in the execute stage, check the decode stage to see if data is eligible
 		//to be passed up.
 		if (i==2){
 			stall = checkDependencies(pipelineInsts[i-1]);
 		}
+		*/
 		//If no stall had been detected previously, move pipeline along.
-		if (stall == 0){	
+		//if (stall == 0){	
 			pipelineInsts[i]->inst = pipelineInsts[i-1]->inst;
 			
 			pipelineInsts[i]->signals.aluop = pipelineInsts[i-1]->signals.aluop;
@@ -216,10 +222,12 @@ void moveObjPipeline(){
 			pipelineInsts[i]->s2data = pipelineInsts[i-1]->s2data;
 			pipelineInsts[i]->input1 = pipelineInsts[i-1]->input1;
 			pipelineInsts[i]->input2 = pipelineInsts[i-1]->input2;
+		/*
 		}
 		else{
 			pipelineInsts[2]->inst = 0;
 		}
+		*/
 	}
 	if(instmem[pc] == 0){//If the next instruction is gone
 		pipelineInsts[0]->inst = 0;
@@ -270,3 +278,94 @@ int checkDependencies(InstInfo* decodeInst){
 	return dependencyDetected;
 }
 
+int decodeMux(int input){
+	InstInfo* decodeInst = pipelineInsts[1];
+	InstInfo* executeInst = pipelineInsts[3];
+	int output = 0;
+	if (input == 1){
+		printf("Decode mux switched on\n");
+		//Both Execute and Decode are R-format
+		if (decodeInst->fields.op == 48 && executeInst->fields.op == 48){
+			if (executeInst->fields.rd == decodeInst->fields.rs){
+				decodeInst->fields.rs = executeInst->aluout;
+				output = 1;
+			}
+			if (executeInst->fields.rd == decodeInst->fields.rt){
+				decodeInst->fields.rt = executeInst->aluout;
+				output = 2;
+			}
+		}
+		//Execute is R-format, Decode is I format
+		else if (executeInst->fields.op == 48){
+			if (executeInst->fields.rd == decodeInst->fields.rs){
+				decodeInst->fields.rs = executeInst->aluout;
+				output=1;
+			}
+		}
+		//Execute is I-format, Decode is R frmat
+		else if (decodeInst->fields.op == 48){
+			if (executeInst->fields.rt == decodeInst->fields.rs){
+				decodeInst->fields.rs = executeInst->aluout;
+				output=1;
+				//printf("Assigned aluout; aluout: %d\n", executeInst->aluout);
+			}
+			if (executeInst->fields.rt == decodeInst->fields.rt){
+				decodeInst->fields.rt = executeInst->aluout;
+				output=2;
+				//printf("Assigned aluout; aluout: %d\n", executeInst->aluout);
+			}
+		}
+		//Both Execute and Decode are I-format
+		else{
+			if (executeInst->fields.rt == decodeInst->fields.rt){
+				decodeInst->fields.rt = executeInst->aluout;
+				output=2;
+			}
+		}	
+	}
+	return output;
+}
+
+int aluMux(int* rs, int* rt){
+	InstInfo* decodeInst = pipelineInsts[2];
+	InstInfo* executeInst = pipelineInsts[3];
+	int output = 0;
+	//Both Execute and Decode are R-format
+	if (decodeInst->fields.op == 48 && executeInst->fields.op == 48){
+		if (executeInst->fields.rd == decodeInst->fields.rs){
+			*rs = executeInst->aluout;
+			output = 1;
+		}
+		if (executeInst->fields.rd == decodeInst->fields.rt){
+			*rt = executeInst->aluout;
+			output = 2;
+		}
+	}
+	//Execute is R-format, Decode is I format
+	else if (executeInst->fields.op == 48){
+		if (executeInst->fields.rd == decodeInst->fields.rs){
+			*rs = executeInst->aluout;
+			output=1;
+		}
+	}
+	//Execute is I-format, Decode is R frmat
+	else if (decodeInst->fields.op == 48){
+		if (executeInst->fields.rt == decodeInst->fields.rs){
+			*rs = executeInst->aluout;
+			output=1;
+		}
+		if (executeInst->fields.rt == decodeInst->fields.rt){
+			*rt = executeInst->aluout;
+			output=2;
+			//printf("Assigned aluout; aluout: %d\n", executeInst->aluout);
+		}
+	}
+	//Both Execute and Decode are I-format
+	else{
+		if (executeInst->fields.rt == decodeInst->fields.rt){
+			*rt = executeInst->aluout;
+			output=2;
+		}
+	}	
+	return output;
+}

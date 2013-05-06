@@ -52,6 +52,8 @@ void writeback(InstInfo *);
 
 void movePipeline(InstInfo newInst);
 void moveObjPipeline();
+int checkDependencies(InstInfo* decodeInst);
+int decodeMux(int input);
 
 // this function is provided for you
 void print(InstInfo *, int);

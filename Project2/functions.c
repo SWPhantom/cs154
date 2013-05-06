@@ -110,7 +110,6 @@ void decode(InstInfo *instruction)
 	instruction->fields.rs = rs;
 	instruction->fields.rt = rt;
 	instruction->fields.imm = imm;
-	
 	int i;
 	////IF/ELSE loop that assigns the fields and signals.
 	//Things with the 110000 op code.
@@ -305,21 +304,32 @@ void decode(InstInfo *instruction)
 
 void execute(InstInfo *instruction)
 {
+	int rsCpy = regfile[instruction->fields.rs];
+	int rtCpy = regfile[instruction->fields.rt];
+
+	int* rs = &rsCpy;
+	int* rt = &rtCpy;
+	
+	int x = aluMux(rs, rt);
+	if (x == 1 || x == 2){
+		//printf("rs: %d, rt: %d\n", *rs, *rt);
+	}
+	
 	if(instruction->fields.op == 48){
 		//Add
 		if(instruction->fields.func == 10){	//Check to see if the func is 001010
 			//"add $rd, $rs, $rt"
-			instruction->aluout = regfile[instruction->fields.rs] + regfile[instruction->fields.rt];
+			instruction->aluout = *rs + *rt;
 		}else
 		//Or
 		if(instruction->fields.func == 48){	//Check to see if the func is 110000
 			//"or $rd, $rs, $rt"
-			instruction->aluout = regfile[instruction->fields.rs] | regfile[instruction->fields.rt];
+			instruction->aluout = *rs | *rt;
 		}else
 		//SLT
 		if(instruction->fields.func == 15){	//Check to see if the func is 001111
 			//"slt $rd, $rs, $rt"
-			if(regfile[instruction->fields.rs] - regfile[instruction->fields.rt] < 0){
+			if(*rs - *rt < 0){
 				instruction->aluout = 1;
 			}else{
 				instruction->aluout = 0;
@@ -328,28 +338,28 @@ void execute(InstInfo *instruction)
 		//XOR
 		if(instruction->fields.func == 20){	//Check to see if the func is 010100
 			//"xor $rd, $rs, $rt"
-			instruction->aluout = regfile[instruction->fields.rs] ^ regfile[instruction->fields.rt];
+			instruction->aluout = *rs ^ *rt;
 		}
 	}else
 	//Operation with op code 011100: subi
 	if (instruction->fields.op == 28){
 		//"subi $rt, $rs, imm"
-		instruction->aluout = regfile[instruction->fields.rs] - instruction->fields.imm;
+		instruction->aluout = *rs - instruction->fields.imm;
 	}else
 	//Operation with op code 000110: lw
 	if (instruction->fields.op == 6){
 		//"lw $rt, imm ($rs)"
-		instruction->aluout = regfile[instruction->fields.rs] + instruction->fields.imm;
+		instruction->aluout = *rs + instruction->fields.imm;
 	}else
 	//Operation with op code 000110: sw
 	if (instruction->fields.op == 2){
 		//"sw $rt, imm ($rs)"
-		instruction->aluout = regfile[instruction->fields.rs] + instruction->fields.imm;
+		instruction->aluout = *rs + instruction->fields.imm;
 	}else
 	//Operation with op code 100111: bge
 	if (instruction->fields.op == 39){
 		//"bge $rs, $rt, imm"
-		instruction->aluout = regfile[instruction->fields.rs] - regfile[instruction->fields.rt];
+		instruction->aluout = *rs - *rt;
 		//printf("rs = %d\nrt = %d\n\n",instruction->fields.rs, instruction->fields.rt); DEBUG
 		if(instruction->aluout >= 0){
 			pc += (instruction->fields.imm);
