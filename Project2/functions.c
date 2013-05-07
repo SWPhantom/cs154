@@ -3,6 +3,9 @@
 #include <strings.h>
 #include "functions.h"
 
+//CS154 Project 2
+//Brian Ly, Yevgen Frolov, Justin Flores
+
 ////=========================Global Variables==========================================
 // register file
 int regfile[32];
@@ -237,7 +240,7 @@ void decode(InstInfo *instruction)
 		instruction->signals.rdst = -1;
 		instruction->signals.rw = 0;
 		sprintf(instruction->string,"j %d", instruction->fields.imm);
-		pc = instruction->fields.imm; //POSSIBLY THE WRONG PLACE D:
+		//pc = instruction->fields.imm; //POSSIBLY THE WRONG PLACE D:
 	}else
 	//Operation with op code 100010: jal
 	if (instruction->fields.op == 34){
@@ -320,7 +323,7 @@ void execute(InstInfo *instruction)
 		instruction->aluout = *rs - *rt;
 		//printf("rs = %d\nrt = %d\n\n",instruction->fields.rs, instruction->fields.rt); DEBUG
 		if(instruction->aluout >= 0){
-			pc += (instruction->fields.imm);
+			//pc += (instruction->fields.imm);
 		}
 	}
 }
@@ -385,8 +388,8 @@ void writeback(InstInfo *instruction)
 	//Operation with op code 100010: jal
 	if (instruction->fields.op == 34){
 		//"jal imm"
-		regfile[31] = pc;
-		pc = instruction->fields.imm;
+		regfile[31] = (instruction->aluout)*4; //Multiply by 4 to simulate machine memory
+		//pc = instruction->fields.imm;
 	}
 }
 ////=========================Function Implementation END===============================

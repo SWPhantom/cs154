@@ -1,14 +1,10 @@
-/*
-INFO FOR WHOEVER WORKS ON THIS NEXT.
-Some branching works now.
-TODO: Branching offset is not always correct. See line 53
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include "functions.h"
 
+//CS154 Project 2
+//Brian Ly, Yevgen Frolov, Justin Flores
 
 InstInfo* pipelineInsts[5];
 InstInfo curInsts[100];
@@ -50,8 +46,8 @@ int main(int argc, char *argv[])
 		int branchTarget = 0; 
 		branchTarget = checkBranch();
 		if (branchTarget != 0){//
-			//printf("branchTarget: %d\n", branchTarget);
-			pc -= branchTarget; //...why does this work? 'pc += branchTarget' did not work.
+			//printf("pc: %d, branchTarget: %d\n", pc, branchTarget);
+			pc = branchTarget; //...why does this work? 'pc += branchTarget' did not work.
 		}		
 		
 		int stall = moveObjPipeline();
@@ -332,8 +328,8 @@ int aluMux(int* rs, int* rt){
 //This function will confirm whether a branch should be taken
 //at the Decode stage. If a data dependency is detected, then forward 
 //that data into the Decode stage for calculation.
-//RETURNS: 0 if no action
-//		   1 if branch taken
+//RETURNS: The instruction to be jumped to; 0 if no action
+//		   
 //===============================================
 int checkBranch(){
 	int action = 0;
@@ -368,6 +364,7 @@ int checkBranch(){
 			pipelineInsts[0]->fields.op = 0;
 			pipelineInsts[0]->fields.func = 0;
 		}	
+		action = pc + action - 1; //Subtract one because we actually do the calculation on the next cycle
 	}
 	//TODO: Later, if we need to store the value of jal into register 31, this block should be split up 
 	//      and jal should be given its own block that stores return address at register 31.
@@ -381,6 +378,9 @@ int checkBranch(){
 		pipelineInsts[0]->fields.imm = 0;
 		pipelineInsts[0]->fields.op = 0;
 		pipelineInsts[0]->fields.func = 0;	
+		if (pipelineInsts[1]->fields.op == 34){
+			pipelineInsts[1]->aluout = pc - 1; //If jal, write to register now.
+		}
 	}
 	return action;
 }
@@ -390,8 +390,7 @@ int checkBranch(){
 //This function will checks for a dependency between the Decode
 //stage and the Execute stage. If a dependency is found, it will 
 //forward the data from Execute -> Decode using aluout.
-//RETURNS: 0 if no dependency found
-//		   1 if dependency found
+//RETURNS: The instruction to be jumped to; 0 if no action
 //===============================================
 int checkBranchWithExecute(int* rs, int* rt){
 	InstInfo* decodeInst = pipelineInsts[1];
@@ -435,8 +434,7 @@ int checkBranchWithExecute(int* rs, int* rt){
 //This function will checks for a dependency between the Decode
 //stage and the Memory stage. If a dependency is found, it will 
 //forward the data from Memory -> Decode using aluout.
-//RETURNS: 0 if no dependency found
-//		   1 if dependency found
+//RETURNS: The instruction to be jumped to; 0 if no action
 //===============================================
 int checkBranchWithMemory(int* rs, int* rt){
 	InstInfo* decodeInst = pipelineInsts[1];

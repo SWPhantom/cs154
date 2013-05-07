@@ -1,6 +1,9 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+//CS154 Project 2
+//Brian Ly, Yevgen Frolov, Justin Flores
+
 // structures
 typedef struct _signals{
 		int aluop;
