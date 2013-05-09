@@ -372,7 +372,7 @@ void writeback(InstInfo *instruction)
 		//XOR
 		if(instruction->fields.func == 20){	//Check to see if the func is 010100
 			//"xor $rd, $rs, $rt"
-			regfile[instruction->fields.rd] = instruction->aluout;			
+			regfile[instruction->fields.rd] = instruction->aluout;
 		}
 	}else
 	//Operation with op code 011100: subi
@@ -388,7 +388,7 @@ void writeback(InstInfo *instruction)
 	//Operation with op code 100010: jal
 	if (instruction->fields.op == 34){
 		//"jal imm"
-		regfile[31] = (instruction->aluout)*4; //Multiply by 4 to simulate machine memory
+		regfile[31] = (instruction->aluout);//*4; //Multiply by 4 to simulate machine memory
 		//pc = instruction->fields.imm;
 	}
 }

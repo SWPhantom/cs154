@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
 		branchTarget = checkBranch();
 		if (branchTarget != 0){//
 			//printf("pc: %d, branchTarget: %d\n", pc, branchTarget);
-			pc = branchTarget; //...why does this work? 'pc += branchTarget' did not work.
-		}		
+			pc = branchTarget; //
+		}
 		
 		int stall = moveObjPipeline();
 		if(pipelineInsts[4]->inst != 0){
@@ -329,7 +329,6 @@ int aluMux(int* rs, int* rt){
 //at the Decode stage. If a data dependency is detected, then forward 
 //that data into the Decode stage for calculation.
 //RETURNS: The instruction to be jumped to; 0 if no action
-//		   
 //===============================================
 int checkBranch(){
 	int action = 0;
@@ -366,8 +365,6 @@ int checkBranch(){
 		}	
 		action = pc + action - 1; //Subtract one because we actually do the calculation on the next cycle
 	}
-	//TODO: Later, if we need to store the value of jal into register 31, this block should be split up 
-	//      and jal should be given its own block that stores return address at register 31.
 	else if (pipelineInsts[1]->fields.op == 34 || pipelineInsts[1]->fields.op == 36){ //j and jal
 		InstInfo* branch = pipelineInsts[1];
 		action = branch->fields.imm;
@@ -377,7 +374,7 @@ int checkBranch(){
 		pipelineInsts[0]->fields.rt = 0;
 		pipelineInsts[0]->fields.imm = 0;
 		pipelineInsts[0]->fields.op = 0;
-		pipelineInsts[0]->fields.func = 0;	
+		pipelineInsts[0]->fields.func = 0;
 		if (pipelineInsts[1]->fields.op == 34){
 			pipelineInsts[1]->aluout = pc - 1; //If jal, write to register now.
 		}
@@ -389,7 +386,8 @@ int checkBranch(){
 //===============================================
 //This function will checks for a dependency between the Decode
 //stage and the Execute stage. If a dependency is found, it will 
-//forward the data from Execute -> Decode using aluout.
+//forward the data from Execute -> Decode using aluout. This is used
+//for branching when a branch instruction is found in the Decode stage.
 //RETURNS: The instruction to be jumped to; 0 if no action
 //===============================================
 int checkBranchWithExecute(int* rs, int* rt){
@@ -433,7 +431,8 @@ int checkBranchWithExecute(int* rs, int* rt){
 //===============================================
 //This function will checks for a dependency between the Decode
 //stage and the Memory stage. If a dependency is found, it will 
-//forward the data from Memory -> Decode using aluout.
+//forward the data from Memory -> Decode using aluout. This is used
+//for branching when a branch instruction is found in the Decode stage.
 //RETURNS: The instruction to be jumped to; 0 if no action
 //===============================================
 int checkBranchWithMemory(int* rs, int* rt){
