@@ -101,11 +101,7 @@ void decode(InstInfo *instruction)
 	rd = (val >> 11) & 0x1f;	//"
 	imm = (val >> 0) & 0xffff;	//Take right 16 bits in case immediate is used.
 
-	//if (imm > 32767){ //If imm is very large, it needs to be complemented
-		//Magic that performs two's complement
-		//See: http://forums.devshed.com/c-programming-42/converting-a-number-in-two-s-complement-223374.html
-		imm = (imm << 16) >> 16;
-	//}
+	imm = (imm << 16) >> 16;
 
 	instruction->fields.op = op;
 	instruction->fields.func = func;

@@ -22,7 +22,7 @@ typedef struct _cache{
 	int accesses;
 	int totalAccessTime;
 } Cache;
-
+////=========================Declarations End==========================================
 
 ////=========================Function Implementations==================================
 
@@ -32,6 +32,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	newCache.cacheSize = cachesize;
 	newCache.type = type;
 	Cache *outputPointer = &newCache;
+	printf("Created and Initialized.\n");
 }
 
 
