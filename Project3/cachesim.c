@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include "cachesim.h"
 
 //CS154 Project 3
 //Brian Ly, Yevgen Frolov, Justin Flores
