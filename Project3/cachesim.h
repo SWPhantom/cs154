@@ -1,5 +1,21 @@
 #ifndef CACHESIM_H
 #define CACHESIM_H
+
+////=========================Declarations==============================================
+typedef struct _cache{
+	int cacheSize;
+	int blockSize;
+	int type;
+	
+	int **cacheBlock;
+	
+	int misses;
+	int accesses;
+	int totalAccessTime;
+} Cache;
+////=========================Declarations End==========================================
+
+////=========================Function Definitions======================================
 /*
  *You have a struct that contains all of the information for one cache. In this
  *function, you create the cache and initialize it, returning a pointer to the struct.
@@ -29,5 +45,6 @@ int accessesSoFar(void *cache);
  *This returns the total number of cycles that all of the accesses have taken so far.
  */
 int totalAccessTime(void *cache);
+////=========================Function Definitions End==================================
 
 #endif
