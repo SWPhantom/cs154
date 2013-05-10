@@ -13,11 +13,7 @@ typedef struct _cache{
 	int blockSize;
 	int type;
 	
-	//POSSIBLY NEED ARRAY STRUCTURE OF INTS THAT CORRESPOND TO THE
-	//ACTUAL CACHE TABLE. THIS COULD BE A POINTER THAT IS MALLOCed
-	//WHEN THE CACHE IS CREATED. THE SIZE OF THE CACHE, THE BLOCK
-	//SIZE AND THE TYPE WILL INFLUENCE HOW BIG THE SAID TABLE WILL
-	//BE
+	int **cacheBlock;
 	
 	int misses;
 	int accesses;
@@ -32,7 +28,10 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	newCache.blockSize = blocksize;
 	newCache.cacheSize = cachesize;
 	newCache.type = type;
+	newCache.misses = 0;
+	newCache.accesses = 0;
 	Cache *outputPointer = &newCache;
+	
 	printf("Created and Initialized.\n");
 }
 
@@ -67,6 +66,22 @@ int accessesSoFar(void *cache){
 
 int totalAccessTime(void *cache){
 	Cache *inCache = cache;
-	return inCache->totalAccessTime;
+	
+	if(inCache->type == 0){
+		int temp = (inCache->misses)*100+(inCache->accesses);
+		return temp;
+	}else
+	
+	if(inCache->type == 1){
+		int temp = (inCache->misses)*100+(inCache->accesses);
+		return temp;
+	}else
+	
+	if(inCache->type == 2){
+		int temp = (inCache->misses)*100+(inCache->accesses)*3;
+		return temp;
+	}else{
+		return -1;
+	}
 }
 ////=========================Function Implementations End==============================
