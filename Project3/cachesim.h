@@ -1,5 +1,20 @@
 #ifndef CACHESIM_H
 #define CACHESIM_H
+
+////=========================Declarations==============================================
+typedef struct _cache{
+	int cacheSize;
+	int blockSize;
+	int type;
+	
+	int **cacheBlock;
+	
+	int misses;
+	int accesses;
+	int totalAccessTime;
+} Cache;
+
+////=======================Function Prototypes=========================================
 /*
  *You have a struct that contains all of the information for one cache. In this
  *function, you create the cache and initialize it, returning a pointer to the struct.
