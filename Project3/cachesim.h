@@ -13,8 +13,10 @@ typedef struct _cache{
 	int accesses;
 	int totalAccessTime;
 } Cache;
+<<<<<<< HEAD
 
 ////=======================Function Prototypes=========================================
+
 /*
  *You have a struct that contains all of the information for one cache. In this
  *function, you create the cache and initialize it, returning a pointer to the struct.
@@ -44,5 +46,6 @@ int accessesSoFar(void *cache);
  *This returns the total number of cycles that all of the accesses have taken so far.
  */
 int totalAccessTime(void *cache);
+////=========================Function Definitions End==================================
 
 #endif

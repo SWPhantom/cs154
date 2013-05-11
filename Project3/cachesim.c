@@ -49,6 +49,7 @@ int accessCache(void *cache, int address){
 	}else{//Something went wrong and the type was not set correctly.
 		return -1;
 	}
+	
 }
 
 int missesSoFar(void *cache){
