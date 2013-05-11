@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
+#include <math.h>
 #include "cachesim.h"
 
 //CS154 Project 3
@@ -16,6 +17,34 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	newCache.type = type;
 	newCache.misses = 0;
 	newCache.accesses = 0;
+	
+	
+	//Allocate space for cacheBlock
+	switch (type){
+		//Direct-Mapped
+		case 0:
+			//Calculate number of slots in cache and allocate them
+			newCache.slots = cachesize/blocksize;
+			newCache.cacheBlock = malloc(sizeof(int) * newCache.slots);
+			
+			//Initialize cache as array of -1.
+			int i;
+			for (i=0; i<newCache.slots; i++){
+				*(newCache.cacheBlock+i) = -1;
+			}
+			
+			//TODO:
+			//offsetSize: 2^x = #ofSlots. NOTE: How can we use bitwise operators to solve this?
+			newCache.offsetSize = 5; //Hardcoded for blockSize = 2, cacheSize = 64. Change later.
+			break;
+		case 1: 
+			break;
+		case 2: 
+			break;
+		default:
+			break;
+	}
+	
 	Cache *outputPointer = (Cache*) malloc(sizeof(Cache));
 	*outputPointer = newCache;
 	
@@ -32,11 +61,25 @@ int accessCache(void *cache, int address){
 	
 	//Direct-mapped cache
 	if(inCache->type == 0){
-		printf("Found type to be direct-mapped cache\n");
+		//Get offset and tag bits from address
+		//TODO: Both offset and tag are hardcoded. Make them dynamic based on offsetSize
+		int offset = address & 0x1f; //Hardcoded for an offset of 5. 
+		int tag = (address >> 5) & 0x3ffffff; //Hardcoded for a tag size of 27
+		//printf("Tag: %d, Offset: %d\n", tag, offset);
 		
-		//Look in cacheBlock and see if address exists here. 
-		
-		
+		//Check slot at offset for tag
+		//Hit
+		if ( *(inCache->cacheBlock+offset) == tag){
+			(inCache->accesses)++; //Hit; increment accesses
+			return 1;
+		}
+		//Miss
+		else{
+			//Overwrite slot with tag
+			*(inCache->cacheBlock+offset) = tag;
+			(inCache->misses)++; //Miss; increment misses;
+			return 0;
+		}
 	}else
 	//Pseudo-associative cache
 	if(inCache->type == 1){
@@ -62,12 +105,6 @@ int missesSoFar(void *cache){
 	*/
 
 	Cache *inCache = cache;
-	if (inCache->type == 2){
-		printf("Found 2\n");
-	}
-	if (inCache->misses == 4){
-		printf("Found 4\n");
-	}
 	
 	//This code works, but looks uglier.
 	return ((Cache*)cache)->misses;
@@ -98,4 +135,15 @@ int totalAccessTime(void *cache){
 		return -1;
 	}
 }
+
+void printCache(void *cache){
+	Cache *inCache = cache;
+	printf("Cache slots:\n");
+	int i;
+	for (i=0; i<inCache->slots; i++){
+		printf("[%d]: %d\n", i, *(inCache->cacheBlock+i));
+	}
+	
+}
+
 ////=========================Function Implementations End==============================

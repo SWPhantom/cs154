@@ -6,14 +6,15 @@ typedef struct _cache{
 	int cacheSize;
 	int blockSize;
 	int type;
+	int slots;
+	int offsetSize;
 	
-	int **cacheBlock;
+	int *cacheBlock;
 	
 	int misses;
 	int accesses;
 	int totalAccessTime;
 } Cache;
-<<<<<<< HEAD
 
 ////=======================Function Prototypes=========================================
 
@@ -46,6 +47,11 @@ int accessesSoFar(void *cache);
  *This returns the total number of cycles that all of the accesses have taken so far.
  */
 int totalAccessTime(void *cache);
+
+/*
+ *DEBUG: Print contents of cache
+*/
+void printCache(void *cache);
 ////=========================Function Definitions End==================================
 
 #endif
