@@ -1,3 +1,6 @@
+//2013-05-12 - Zhenya
+- I fixed the hardcoding quandry. Used a 'log' function by doing a while loop.
+
 Brian - May 11,2013
 Changelog:
 - Changed cacheBlock to a single array. A double array seems unneccessary for now 

@@ -30,16 +30,13 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 			//Initialize cache as array of -1.
 			int i;
 			for (i=0; i<newCache.slots; i++){
-				*(newCache.cacheBlock+i) = -1;
+				newCache.cacheBlock[i] = -1;
 			}
-			
-			//TODO:
-			//offsetSize: 2^x = #ofSlots. NOTE: How can we use bitwise operators to solve this?
-			newCache.offsetSize = 5; //Hardcoded for blockSize = 2, cacheSize = 64. Change later.
+			newCache.offsetSize = cachesize/blocksize-1;
 			break;
-		case 1: 
+		case 1:
 			break;
-		case 2: 
+		case 2:
 			break;
 		default:
 			break;
@@ -62,21 +59,20 @@ int accessCache(void *cache, int address){
 	//Direct-mapped cache
 	if(inCache->type == 0){
 		//Get offset and tag bits from address
-		//TODO: Both offset and tag are hardcoded. Make them dynamic based on offsetSize
-		int offset = address & 0x1f; //Hardcoded for an offset of 5. 
-		int tag = (address >> 5) & 0x3ffffff; //Hardcoded for a tag size of 27
+		int offset = address & (inCache->offsetSize);
+		int tag = (address >> inCache->offsetSize) & (32-inCache->offsetSize);
 		//printf("Tag: %d, Offset: %d\n", tag, offset);
 		
 		//Check slot at offset for tag
 		//Hit
-		if ( *(inCache->cacheBlock+offset) == tag){
+		if ( (inCache->cacheBlock[offset]) == tag){
 			(inCache->accesses)++; //Hit; increment accesses
 			return 1;
 		}
 		//Miss
 		else{
 			//Overwrite slot with tag
-			*(inCache->cacheBlock+offset) = tag;
+			(inCache->cacheBlock[offset]) = tag;
 			(inCache->misses)++; //Miss; increment misses;
 			return 0;
 		}
@@ -104,7 +100,7 @@ int missesSoFar(void *cache){
 	return inCache->misses;
 	*/
 
-	Cache *inCache = cache;
+	//Cache *inCache = cache;
 	
 	//This code works, but looks uglier.
 	return ((Cache*)cache)->misses;
@@ -143,7 +139,16 @@ void printCache(void *cache){
 	for (i=0; i<inCache->slots; i++){
 		printf("[%d]: %d\n", i, *(inCache->cacheBlock+i));
 	}
-	
 }
 
+/*
+int bitLog(int input){
+	int temp = input;
+	int output = -1;
+	while(temp != 0){
+		++output;
+		temp >>= 1;
+	}
+}
+*/
 ////=========================Function Implementations End==============================
