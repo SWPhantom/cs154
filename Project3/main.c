@@ -46,8 +46,7 @@ int main(int argc, char *argv[])
 		cacheSize = 512;
 		printf("\n==========TEST 2==========\nCreating direct mapped cache2.\nBlocksize: %d\ncacheSize: %d\ntype: %d\n\n", blockSize, cacheSize, type);
 		cache2 = createAndInitialize(blockSize, cacheSize, type);
-
-
+		
 		//printf("About to run accessCache\n");
 		accessCache(cache2, 18);
 		accessCache(cache2, 18);
