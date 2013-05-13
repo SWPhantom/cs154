@@ -17,30 +17,33 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	newCache.type = type;
 	newCache.misses = 0;
 	newCache.accesses = 0;
+	newCache.slots = cachesize/blocksize;
+	newCache.cacheBlock = malloc(sizeof(int) * newCache.slots);
+	newCache.validBlock = malloc(sizeof(int) * newCache.slots);
 	
+	//Initialize cache as array of -1.
+	int i;
+	for(i=0; i<newCache.slots; i++){
+		newCache.cacheBlock[i] = -1;
+	}
+	//Initialize all validity bits to 0
+	for(i = 0; i < newCache.slots; ++i){
+		newCache.validBlock[i] = 0;
+	}
 	
-	//Allocate space for cacheBlock
+	//Change the offsetSize in accordance to the type of cache this is.
 	switch (type){
 		//Direct-Mapped
 		case 0:
-			//Calculate number of slots in cache and allocate them
-			newCache.slots = cachesize/blocksize;
-			newCache.cacheBlock = malloc(sizeof(int) * newCache.slots);
-			newCache.validBlock = malloc(sizeof(int) * newCache.slots);
-			
-			//Initialize cache as array of -1.
-			int i;
-			for(i=0; i<newCache.slots; i++){
-				newCache.cacheBlock[i] = -1;
-			}
-			for(i = 0; i < newCache.slots; ++i){
-				newCache.validBlock[i] = 0;
-			}
-			newCache.offsetSize = cachesize/blocksize-1;
+			newCache.offsetSize = cachesize/blocksize - 1;
 			break;
 		case 1:
+			//printf("Before shift right: %d\n",cachesize/blocksize-1);
+			newCache.offsetSize = ((cachesize/blocksize) >> 1) - 1;
+			//printf("After shift right: %d\n",newCache.offsetSize);
 			break;
 		case 2:
+			newCache.offsetSize = ((cachesize/blocksize) >> 2) - 1;
 			break;
 		default:
 			break;
@@ -55,45 +58,113 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 
 int accessCache(void *cache, int address){
 	Cache *inCache = cache;
-	
 	//Direct-mapped cache
 	if(inCache->type == 0){
 		//Get offset and tag bits from address
 		int offset = address & (inCache->offsetSize);
-		int tag = (address >> inCache->offsetSize) & (32-inCache->offsetSize);
-		//printf("Tag: %d, Offset: %d\n", tag, offset);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
-			printf("Valid...");
-			if (inCache->cacheBlock[offset] == tag){
-				printf("Hit!\n");
+			if (inCache->cacheBlock[offset] == address){
 				(inCache->accesses)++; //Hit; increment accesses
 				return 1;
 			}
 			//Miss
 			else{
-				printf("Miss!\n");
 				//Overwrite slot with tag
-				inCache->cacheBlock[offset] = tag;
+				inCache->cacheBlock[offset] = address;
 				(inCache->misses)++; //Miss; increment misses;
 				return 0;
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
-			printf("Invalid.\n");
 			inCache->validBlock[offset] = 1;
-			inCache->cacheBlock[offset] = tag;
+			inCache->cacheBlock[offset] = address;
 			++(inCache->misses);
+			return 0;
 		}
-		
 	}else
+	
 	//Pseudo-associative cache
 	if(inCache->type == 1){
-		printf("Found type to be pseudo-associative cache\n");
+		//Get offset and tag bits from address
+		int offset = address & (inCache->offsetSize);
+		offset <<= 1;
+		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
+			if (inCache->cacheBlock[offset] == address){
+				(inCache->accesses)++; //Hit; increment accesses
+				return 1;
+			}
+			//Miss
+			else{
+				if(inCache->cacheBlock[offset+1] == address){
+					(inCache->accesses)++;
+					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+					inCache->cacheBlock[offset] = address;
+					inCache->validBlock[offset] = 1;//redundancy for insurance
+					inCache->validBlock[offset+1] = 1;
+					return 1;
+				}else{//if there is no match at all
+					++(inCache->misses);
+					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+					inCache->cacheBlock[offset] = address;
+					inCache->validBlock[offset] = 1;//redundancy for insurance
+					inCache->validBlock[offset+1] = 1;
+					return 0;
+				}
+				//Overwrite slot with tag
+				inCache->cacheBlock[offset] = address;
+				(inCache->misses)++; //Miss; increment misses;
+				return 0;
+			}
+		}else{//If the entry is not valid: miss, validate, and update data.
+			//printf("Invalid.\n");
+			inCache->validBlock[offset] = 1;
+			inCache->cacheBlock[offset] = address;
+			++(inCache->misses);
+			return 0;
+		}
 	}else
+	
 	//4-way set associative cache
 	if(inCache->type == 2){
-		printf("Found type to be 4-way set associative cache\n");
-		printf("misses: %d, type: %d\n", inCache->misses, inCache->type);
+		//Get offset and tag bits from address
+		int offset = address & (inCache->offsetSize);
+		offset <<= 2;
+		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
+			if (inCache->cacheBlock[offset] == address){
+				(inCache->accesses)++; //Hit; increment accesses
+				return 1;
+			}
+			//Miss
+			else{//TODO
+				if(inCache->cacheBlock[offset+1] == address){
+					(inCache->accesses)++;
+					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+					inCache->cacheBlock[offset] = address;
+					inCache->validBlock[offset] = 1;//redundancy for insurance
+					inCache->validBlock[offset+1] = 1;
+					return 1;
+				}else{//if there is no match at all
+					++(inCache->misses);
+					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+					inCache->cacheBlock[offset] = address;
+					inCache->validBlock[offset] = 1;//redundancy for insurance
+					inCache->validBlock[offset+1] = 1;
+					return 0;
+				}
+				//Overwrite slot with tag
+				inCache->cacheBlock[offset] = address;
+				(inCache->misses)++; //Miss; increment misses;
+				return 0;
+			}
+		}else{//If the entry is not valid: miss, validate, and update data.
+			//printf("Invalid.\n");
+			inCache->validBlock[offset] = 1;
+			inCache->cacheBlock[offset] = address;
+			++(inCache->misses);
+			return 0;
+		}
+		
+		
 	}else{//Something went wrong and the type was not set correctly.
 		return -1;
 	}
@@ -101,18 +172,8 @@ int accessCache(void *cache, int address){
 }
 
 int missesSoFar(void *cache){
-	//The following code doesn't work. Can we find out why? It does not return
-	//misses, but instead some address. We have inconsistent access problems
-	//when we call similar code in other functions.
-	///*
 	Cache *inCache = cache;
 	return inCache->misses;
-	//*/
-
-	//Cache *inCache = cache;
-	
-	//This code works, but looks uglier.
-	//return ((Cache*)cache)->misses;
 }
 
 int accessesSoFar(void *cache){
@@ -143,21 +204,11 @@ int totalAccessTime(void *cache){
 
 void printCache(void *cache){
 	Cache *inCache = cache;
-	printf("Cache slots:\n");
+	printf("Cache slots:");
 	int i;
-	for (i=0; i<inCache->slots; i++){
-		printf("[%d]: %d\n", i, *(inCache->cacheBlock+i));
+	for (i = 0; i < inCache->slots; i++){
+		printf("[%d]:%d, ", i, inCache->cacheBlock[i]);
 	}
+	printf("\n");
 }
-
-/*
-int bitLog(int input){
-	int temp = input;
-	int output = -1;
-	while(temp != 0){
-		++output;
-		temp >>= 1;
-	}
-}
-*/
 ////=========================Function Implementations End==============================
