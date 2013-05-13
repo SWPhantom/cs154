@@ -110,10 +110,6 @@ int accessCache(void *cache, int address){
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
-				//Overwrite slot with tag
-				inCache->cacheBlock[offset] = address;
-				(inCache->misses)++; //Miss; increment misses;
-				return 0;
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
 			//printf("Invalid.\n");
@@ -131,18 +127,79 @@ int accessCache(void *cache, int address){
 		offset <<= 2;
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == address){
-				(inCache->accesses)++; //Hit; increment accesses
+				++(inCache->accesses); //Hit; increment accesses
 				return 1;
 			}
 			//Miss
-			else{//TODO
-				if(inCache->cacheBlock[offset+1] == address){
-					(inCache->accesses)++;
-					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-					inCache->cacheBlock[offset] = address;
-					inCache->validBlock[offset] = 1;//redundancy for insurance
-					inCache->validBlock[offset+1] = 1;
-					return 1;
+			else{
+				if(inCache->validBlock[offset+1] == 1){
+					if(inCache->cacheBlock[offset+1] == address){
+						++(inCache->accesses); //Hit; increment accesses
+						inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+						inCache->cacheBlock[offset] = address;
+						inCache->validBlock[offset] = 1;//redundancy for insurance
+						inCache->validBlock[offset+1] = 1;
+						return 1;
+					}else{
+						if(inCache->validBlock[offset+2] == 1){
+							if(inCache->cacheBlock[offset+2] == address){
+								++(inCache->accesses); //Hit; increment accesses
+								inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
+								inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+								inCache->cacheBlock[offset] = address;
+								inCache->validBlock[offset] = 1;//redundancy for insurance
+								inCache->validBlock[offset+1] = 1;
+								inCache->validBlock[offset+2] = 1;
+								return 1;
+							}else{
+								if(inCache->validBlock[offset+3] == 1){
+									if(inCache->cacheBlock[offset+3] == address){
+										++(inCache->accesses);
+										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
+										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
+										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+										inCache->cacheBlock[offset] = address;
+										inCache->validBlock[offset] = 1;//redundancy for insurance
+										inCache->validBlock[offset+1] = 1;
+										inCache->validBlock[offset+2] = 1;
+										inCache->validBlock[offset+3] = 1;
+										return 1;
+									}else{
+										++(inCache->misses);
+										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
+										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
+										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+										inCache->cacheBlock[offset] = address;
+										inCache->validBlock[offset] = 1;//redundancy for insurance
+										inCache->validBlock[offset+1] = 1;
+										inCache->validBlock[offset+2] = 1;
+										inCache->validBlock[offset+3] = 1;
+										return 0;
+									}
+								}else{
+									++(inCache->misses);
+									inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
+									inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
+									inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+									inCache->cacheBlock[offset] = address;
+									inCache->validBlock[offset] = 1;//redundancy for insurance
+									inCache->validBlock[offset+1] = 1;
+									inCache->validBlock[offset+2] = 1;
+									inCache->validBlock[offset+3] = 1;
+									return 0;
+								}
+							}
+						}else{
+							++(inCache->misses);
+							inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
+							inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
+							inCache->cacheBlock[offset] = address;
+							inCache->validBlock[offset] = 1;//redundancy for insurance
+							inCache->validBlock[offset+1] = 1;
+							inCache->validBlock[offset+2] = 1;
+							return 0;
+						}
+					}
 				}else{//if there is no match at all
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
@@ -151,10 +208,6 @@ int accessCache(void *cache, int address){
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
-				//Overwrite slot with tag
-				inCache->cacheBlock[offset] = address;
-				(inCache->misses)++; //Miss; increment misses;
-				return 0;
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
 			//printf("Invalid.\n");
