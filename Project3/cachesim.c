@@ -26,11 +26,15 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 			//Calculate number of slots in cache and allocate them
 			newCache.slots = cachesize/blocksize;
 			newCache.cacheBlock = malloc(sizeof(int) * newCache.slots);
+			newCache.validBlock = malloc(sizeof(int) * newCache.slots);
 			
 			//Initialize cache as array of -1.
 			int i;
-			for (i=0; i<newCache.slots; i++){
+			for(i=0; i<newCache.slots; i++){
 				newCache.cacheBlock[i] = -1;
+			}
+			for(i = 0; i < newCache.slots; ++i){
+				newCache.validBlock[i] = 0;
 			}
 			newCache.offsetSize = cachesize/blocksize-1;
 			break;
@@ -49,10 +53,6 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	return outputPointer;
 }
 
-/*
-	I am assuming when we access a cache and there is a miss, we must insert the requested
-	data into the cache.
-*/
 int accessCache(void *cache, int address){
 	Cache *inCache = cache;
 	
@@ -63,19 +63,28 @@ int accessCache(void *cache, int address){
 		int tag = (address >> inCache->offsetSize) & (32-inCache->offsetSize);
 		//printf("Tag: %d, Offset: %d\n", tag, offset);
 		
-		//Check slot at offset for tag
-		//Hit
-		if ( (inCache->cacheBlock[offset]) == tag){
-			(inCache->accesses)++; //Hit; increment accesses
-			return 1;
+		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
+			printf("Valid...");
+			if (inCache->cacheBlock[offset] == tag){
+				printf("Hit!\n");
+				(inCache->accesses)++; //Hit; increment accesses
+				return 1;
+			}
+			//Miss
+			else{
+				printf("Miss!\n");
+				//Overwrite slot with tag
+				inCache->cacheBlock[offset] = tag;
+				(inCache->misses)++; //Miss; increment misses;
+				return 0;
+			}
+		}else{//If the entry is not valid: miss, validate, and update data.
+			printf("Invalid.\n");
+			inCache->validBlock[offset] = 1;
+			inCache->cacheBlock[offset] = tag;
+			++(inCache->misses);
 		}
-		//Miss
-		else{
-			//Overwrite slot with tag
-			(inCache->cacheBlock[offset]) = tag;
-			(inCache->misses)++; //Miss; increment misses;
-			return 0;
-		}
+		
 	}else
 	//Pseudo-associative cache
 	if(inCache->type == 1){
@@ -95,15 +104,15 @@ int missesSoFar(void *cache){
 	//The following code doesn't work. Can we find out why? It does not return
 	//misses, but instead some address. We have inconsistent access problems
 	//when we call similar code in other functions.
-	/*
+	///*
 	Cache *inCache = cache;
 	return inCache->misses;
-	*/
+	//*/
 
 	//Cache *inCache = cache;
 	
 	//This code works, but looks uglier.
-	return ((Cache*)cache)->misses;
+	//return ((Cache*)cache)->misses;
 }
 
 int accessesSoFar(void *cache){

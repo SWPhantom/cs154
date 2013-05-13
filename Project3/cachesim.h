@@ -10,6 +10,7 @@ typedef struct _cache{
 	int offsetSize;
 	
 	int *cacheBlock;
+	int *validBlock;
 	
 	int misses;
 	int accesses;
