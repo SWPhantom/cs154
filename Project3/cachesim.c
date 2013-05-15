@@ -48,7 +48,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 		default:
 			break;
 	}
-	
+//	printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
 	Cache *outputPointer = (Cache*) malloc(sizeof(Cache));
 	*outputPointer = newCache;
 	
@@ -73,12 +73,14 @@ int accessCache(void *cache, int address){
 				//Overwrite slot with tag
 				inCache->cacheBlock[offset] = address;
 				(inCache->misses)++; //Miss; increment misses;
+++(inCache->accesses);
 				return 0;
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
 			inCache->validBlock[offset] = 1;
 			inCache->cacheBlock[offset] = address;
 			++(inCache->misses);
+++(inCache->accesses);
 			return 0;
 		}
 	}else
@@ -104,6 +106,7 @@ int accessCache(void *cache, int address){
 					return 1;
 				}else{//if there is no match at all
 					++(inCache->misses);
+++(inCache->accesses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = address;
 					inCache->validBlock[offset] = 1;//redundancy for insurance
@@ -116,6 +119,7 @@ int accessCache(void *cache, int address){
 			inCache->validBlock[offset] = 1;
 			inCache->cacheBlock[offset] = address;
 			++(inCache->misses);
+++(inCache->accesses);
 			return 0;
 		}
 	}else
@@ -166,6 +170,7 @@ int accessCache(void *cache, int address){
 										return 1;
 									}else{
 										++(inCache->misses);
+++(inCache->accesses);
 										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
@@ -178,6 +183,7 @@ int accessCache(void *cache, int address){
 									}
 								}else{
 									++(inCache->misses);
+++(inCache->accesses);
 									inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 									inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 									inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
@@ -191,6 +197,7 @@ int accessCache(void *cache, int address){
 							}
 						}else{
 							++(inCache->misses);
+++(inCache->accesses);
 							inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 							inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 							inCache->cacheBlock[offset] = address;
@@ -202,6 +209,7 @@ int accessCache(void *cache, int address){
 					}
 				}else{//if there is no match at all
 					++(inCache->misses);
+++(inCache->accesses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = address;
 					inCache->validBlock[offset] = 1;//redundancy for insurance
@@ -214,10 +222,11 @@ int accessCache(void *cache, int address){
 			inCache->validBlock[offset] = 1;
 			inCache->cacheBlock[offset] = address;
 			++(inCache->misses);
+++(inCache->accesses);
 			return 0;
 		}
-		
-		
+
+
 	}else{//Something went wrong and the type was not set correctly.
 		return -1;
 	}
@@ -238,17 +247,17 @@ int totalAccessTime(void *cache){
 	Cache *inCache = cache;
 	
 	if(inCache->type == 0){
-		int temp = (inCache->misses)*100+(inCache->accesses);
+		int temp = (inCache->misses)*100+(inCache->accesses - inCache->misses);
 		return temp;
 	}else
 	
 	if(inCache->type == 1){
-		int temp = (inCache->misses)*100+(inCache->accesses);
+		int temp = (inCache->misses)*100+(inCache->accesses - inCache->misses);
 		return temp;
 	}else
 	
 	if(inCache->type == 2){
-		int temp = (inCache->misses)*100+(inCache->accesses)*3;
+		int temp = (inCache->misses)*100+(inCache->accesses - inCache->misses)*3;
 		return temp;
 	}else{
 		return -1;
