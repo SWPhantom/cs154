@@ -52,7 +52,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	Cache *outputPointer = (Cache*) malloc(sizeof(Cache));
 	*outputPointer = newCache;
 	
-	printf("Created and Initialized.\n");
+	//printf("Created and Initialized.\n");
 	return outputPointer;
 }
 
