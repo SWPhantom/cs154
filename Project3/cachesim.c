@@ -57,7 +57,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 int accessCache(void *cache, int address){
 	Cache *inCache = cache;
 	++(inCache->accesses); // Because every access will add to the access variable
-	int offset = address<<calcLog(inCache->blockSize) & (inCache->offsetSize);
+	int offset = address>>calcLog(inCache->blockSize) & (inCache->offsetSize);
 	//Direct-mapped cache
 	if(inCache->type == 0){
 		//Get offset and tag bits from address
