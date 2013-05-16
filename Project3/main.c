@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 		//Debugging our access methods.
 		x = missesSoFar(cache1);
 		y = accessesSoFar(cache1);
-		printf("Hits: %d, Misses: %d\n", y, x);
+		printf("Accesses: %d, Misses: %d\n", y, x);
 		printf("Total Access Time: %d\n\n", totalAccessTime(cache1));
 	}
 	//////////////////////////////////////////////
@@ -66,33 +66,33 @@ int main(int argc, char *argv[])
 		
 		cache2 = createAndInitialize(blockSize, cacheSize, type);
 		//printf("About to run accessCache\n");
-		accessCache(cache2, 18);
-		accessCache(cache2, 18);
-		accessCache(cache2, 390);
-		accessCache(cache2, 9099);
-		accessCache(cache2, 18);
-		accessCache(cache2, 42);
-		accessCache(cache2, 42);
-		accessCache(cache2, 42);
-		accessCache(cache2, 234);
-		accessCache(cache2, 106);
-		accessCache(cache2, 42);
-		accessCache(cache2, 234);
-		accessCache(cache2, 106);
-		accessCache(cache2, 42);
-		accessCache(cache2, 234);
-		accessCache(cache2, 106);
-		accessCache(cache2, 3);
-		accessCache(cache2, 4);
-		accessCache(cache2, 5);
-		accessCache(cache2, 6);
-		accessCache(cache2, 7);
-		accessCache(cache2, 8);
+		printf("Hit: %d\n",accessCache(cache2, 18));
+		printf("Hit: %d\n",accessCache(cache2, 18));
+		printf("Hit: %d\n",accessCache(cache2, 390));
+		printf("Hit: %d\n",accessCache(cache2, 9099));
+		printf("Hit: %d\n",accessCache(cache2, 18));
+		printf("Hit: %d\n",accessCache(cache2, 42));
+		printf("Hit: %d\n",accessCache(cache2, 42));
+		printf("Hit: %d\n",accessCache(cache2, 42));
+		printf("Hit: %d\n",accessCache(cache2, 234));
+		printf("Hit: %d\n",accessCache(cache2, 106));
+		printf("Hit: %d\n",accessCache(cache2, 42));
+		printf("Hit: %d\n",accessCache(cache2, 234));
+		printf("Hit: %d\n",accessCache(cache2, 106));
+		printf("Hit: %d\n",accessCache(cache2, 42));
+		printf("Hit: %d\n",accessCache(cache2, 234));
+		printf("Hit: %d\n",accessCache(cache2, 106));
+		printf("Hit: %d\n",accessCache(cache2, 3));
+		printf("Hit: %d\n",accessCache(cache2, 4));
+		printf("Hit: %d\n",accessCache(cache2, 5));
+		printf("Hit: %d\n",accessCache(cache2, 6));
+		printf("Hit: %d\n",accessCache(cache2, 7));
+		printf("Hit: %d\n",accessCache(cache2, 8));
 	
 		//Debugging our access methods.
 		x = missesSoFar(cache2);
 		y = accessesSoFar(cache2);
-		printf("Hits: %d, Misses: %d\n", y, x);
+		printf("Accesses: %d, Misses: %d\n", y, x);
 		printf("Total Access Time: %d\n\n", totalAccessTime(cache2));
 	}
 
@@ -106,33 +106,33 @@ int main(int argc, char *argv[])
 		
 		cache3 = createAndInitialize(blockSize, cacheSize, type);
 		//printf("About to run accessCache\n");
-		accessCache(cache3, 18);
-		accessCache(cache3, 18);
-		accessCache(cache3, 390);
-		accessCache(cache3, 9099);
-		accessCache(cache3, 18);
-		accessCache(cache3, 42);
-		accessCache(cache3, 42);
-		accessCache(cache3, 42);
-		accessCache(cache3, 234);
-		accessCache(cache3, 106);
-		accessCache(cache3, 42);
-		accessCache(cache3, 234);
-		accessCache(cache3, 106);
-		accessCache(cache3, 42);
-		accessCache(cache3, 234);
-		accessCache(cache3, 106);
-		accessCache(cache3, 3);
-		accessCache(cache3, 4);
-		accessCache(cache3, 5);
-		accessCache(cache3, 6);
-		accessCache(cache3, 7);
-		accessCache(cache3, 8);
+		printf("Hit: %d\n",accessCache(cache3, 18));
+		printf("Hit: %d\n",accessCache(cache3, 18));
+		printf("Hit: %d\n",accessCache(cache3, 390));
+		printf("Hit: %d\n",accessCache(cache3, 9099));
+		printf("Hit: %d\n",accessCache(cache3, 18));
+		printf("Hit: %d\n",accessCache(cache3, 42));
+		printf("Hit: %d\n",accessCache(cache3, 42));
+		printf("Hit: %d\n",accessCache(cache3, 42));
+		printf("Hit: %d\n",accessCache(cache3, 234));
+		printf("Hit: %d\n",accessCache(cache3, 106));
+		printf("Hit: %d\n",accessCache(cache3, 42));
+		printf("Hit: %d\n",accessCache(cache3, 234));
+		printf("Hit: %d\n",accessCache(cache3, 106));
+		printf("Hit: %d\n",accessCache(cache3, 42));
+		printf("Hit: %d\n",accessCache(cache3, 234));
+		printf("Hit: %d\n",accessCache(cache3, 106));
+		printf("Hit: %d\n",accessCache(cache3, 3));
+		printf("Hit: %d\n",accessCache(cache3, 4));
+		printf("Hit: %d\n",accessCache(cache3, 5));
+		printf("Hit: %d\n",accessCache(cache3, 6));
+		printf("Hit: %d\n",accessCache(cache3, 7));
+		printf("Hit: %d\n",accessCache(cache3, 8));
 	
 		//Debugging our access methods.
 		x = missesSoFar(cache3);
 		y = accessesSoFar(cache3);
-		printf("Hits: %d, Misses: %d\n", y, x);
+		printf("Accesses: %d, Misses: %d\n", y, x);
 		printf("Total Access Time: %d\n\n", totalAccessTime(cache3));
 	}
 
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 		//Debugging our access methods.
 		x = missesSoFar(cache4);
 		y = accessesSoFar(cache4);
-		printf("Hits: %d, Misses: %d\n", y, x);
+		printf("Accesses: %d, Misses: %d\n", y, x);
 		printf("Total Access Time: %d\n\n", totalAccessTime(cache4));
 	}
 }

@@ -38,9 +38,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 			newCache.offsetSize = cachesize/blocksize - 1;
 			break;
 		case 1:
-			//printf("Before shift right: %d\n",cachesize/blocksize-1);
 			newCache.offsetSize = ((cachesize/blocksize) >> 1) - 1;
-			//printf("After shift right: %d\n",newCache.offsetSize);
 			break;
 		case 2:
 			newCache.offsetSize = ((cachesize/blocksize) >> 2) - 1;
@@ -48,11 +46,9 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 		default:
 			break;
 	}
-//	printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
+	//printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
 	Cache *outputPointer = (Cache*) malloc(sizeof(Cache));
 	*outputPointer = newCache;
-	
-	//printf("Created and Initialized.\n");
 	return outputPointer;
 }
 
@@ -98,14 +94,12 @@ int accessCache(void *cache, int address){
 				if(inCache->cacheBlock[offset+1] == address){
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = address;
-					inCache->validBlock[offset] = 1;//redundancy for insurance
 					inCache->validBlock[offset+1] = 1;
 					return 1;
 				}else{//if there is no match at all
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = address;
-					inCache->validBlock[offset] = 1;//redundancy for insurance
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
@@ -134,7 +128,6 @@ int accessCache(void *cache, int address){
 					if(inCache->cacheBlock[offset+1] == address){
 						inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 						inCache->cacheBlock[offset] = address;
-						inCache->validBlock[offset] = 1;//redundancy for insurance
 						inCache->validBlock[offset+1] = 1;
 						return 1;
 					}else{
@@ -143,8 +136,6 @@ int accessCache(void *cache, int address){
 								inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 								inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 								inCache->cacheBlock[offset] = address;
-								inCache->validBlock[offset] = 1;//redundancy for insurance
-								inCache->validBlock[offset+1] = 1;
 								inCache->validBlock[offset+2] = 1;
 								return 1;
 							}else{
@@ -154,9 +145,6 @@ int accessCache(void *cache, int address){
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 										inCache->cacheBlock[offset] = address;
-										inCache->validBlock[offset] = 1;//redundancy for insurance
-										inCache->validBlock[offset+1] = 1;
-										inCache->validBlock[offset+2] = 1;
 										inCache->validBlock[offset+3] = 1;
 										return 1;
 									}else{
@@ -165,9 +153,6 @@ int accessCache(void *cache, int address){
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 										inCache->cacheBlock[offset] = address;
-										inCache->validBlock[offset] = 1;//redundancy for insurance
-										inCache->validBlock[offset+1] = 1;
-										inCache->validBlock[offset+2] = 1;
 										inCache->validBlock[offset+3] = 1;
 										return 0;
 									}
@@ -177,9 +162,6 @@ int accessCache(void *cache, int address){
 									inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 									inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 									inCache->cacheBlock[offset] = address;
-									inCache->validBlock[offset] = 1;//redundancy for insurance
-									inCache->validBlock[offset+1] = 1;
-									inCache->validBlock[offset+2] = 1;
 									inCache->validBlock[offset+3] = 1;
 									return 0;
 								}
@@ -189,8 +171,6 @@ int accessCache(void *cache, int address){
 							inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 							inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 							inCache->cacheBlock[offset] = address;
-							inCache->validBlock[offset] = 1;//redundancy for insurance
-							inCache->validBlock[offset+1] = 1;
 							inCache->validBlock[offset+2] = 1;
 							return 0;
 						}
@@ -199,7 +179,6 @@ int accessCache(void *cache, int address){
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = address;
-					inCache->validBlock[offset] = 1;//redundancy for insurance
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
@@ -233,17 +212,17 @@ int totalAccessTime(void *cache){
 	Cache *inCache = cache;
 	
 	if(inCache->type == 0){
-		int temp = (inCache->misses)*101+(inCache->accesses - inCache->misses);
+		int temp = (inCache->misses)*100+(inCache->accesses);
 		return temp;
 	}else
 	
 	if(inCache->type == 1){
-		int temp = (inCache->misses)*101+(inCache->accesses - inCache->misses);
+		int temp = (inCache->misses)*100+(inCache->accesses);
 		return temp;
 	}else
 	
 	if(inCache->type == 2){
-		int temp = (inCache->misses)*103+(inCache->accesses - inCache->misses)*3;
+		int temp = (inCache->misses)*100+(inCache->accesses)*3;
 		return temp;
 	}else{
 		return -1;
