@@ -48,7 +48,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 		default:
 			break;
 	}
-	printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
+	//printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
 	Cache *outputPointer = (Cache*) malloc(sizeof(Cache));
 	*outputPointer = newCache;
 	return outputPointer;
