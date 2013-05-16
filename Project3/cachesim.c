@@ -31,6 +31,8 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 		newCache.validBlock[i] = 0;
 	}
 	
+	//printf("Log of blocksize: %d.\n",calcLog(newCache.blockSize));//DEBUG
+	
 	//Change the offsetSize in accordance to the type of cache this is.
 	switch (type){
 		//Direct-Mapped
@@ -46,7 +48,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 		default:
 			break;
 	}
-	//printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
+	printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
 	Cache *outputPointer = (Cache*) malloc(sizeof(Cache));
 	*outputPointer = newCache;
 	return outputPointer;
@@ -55,11 +57,10 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 int accessCache(void *cache, int address){
 	Cache *inCache = cache;
 	++(inCache->accesses); // Because every access will add to the access variable
-	
+	int offset = address<<calcLog(inCache->blockSize) & (inCache->offsetSize);
 	//Direct-mapped cache
 	if(inCache->type == 0){
 		//Get offset and tag bits from address
-		int offset = address & (inCache->offsetSize);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == address){
@@ -83,7 +84,6 @@ int accessCache(void *cache, int address){
 	//Pseudo-associative cache
 	if(inCache->type == 1){
 		//Get offset and tag bits from address
-		int offset = address & (inCache->offsetSize);
 		offset <<= 1;
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == address){
@@ -116,7 +116,6 @@ int accessCache(void *cache, int address){
 	//4-way set associative cache
 	if(inCache->type == 2){
 		//Get offset and tag bits from address
-		int offset = address & (inCache->offsetSize);
 		offset <<= 2;
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == address){
@@ -238,4 +237,14 @@ void printCache(void *cache){
 	}
 	printf("\n");
 }
+
+int calcLog(int input){
+	int counter = -1;
+	while(input != 0){
+		input >>= 1;
+		++counter;
+	}
+	return counter;
+}
+
 ////=========================Function Implementations End==============================

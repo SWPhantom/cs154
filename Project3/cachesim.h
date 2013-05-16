@@ -53,6 +53,8 @@ int totalAccessTime(void *cache);
  *DEBUG: Print contents of cache
 */
 void printCache(void *cache);
+
+int calcLog(int input);
 ////=========================Function Definitions End==================================
 
 #endif
