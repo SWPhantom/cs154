@@ -20,6 +20,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	newCache.accesses = 0;
 	newCache.pseudoAccesses = 0;
 	newCache.slots = (cachesize>>calcLog(blocksize));
+	newCache.byteOffset = calcLog(blocksize);
 	newCache.cacheBlock = malloc(sizeof(int) * newCache.slots);
 	newCache.validBlock = malloc(sizeof(int) * newCache.slots);
 	
@@ -41,17 +42,17 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	switch (type){
 		//Direct-Mapped
 		case 0:
-			newCache.offsetSize = (cachesize>>calcLog(blocksize)) - 1;
+			newCache.offsetSize = (newCache.slots) - 1;
 			break;
 		case 1:
 			//Has to be shifted by 1 because we are indexing this into /2 of
 			//the direct mapped cache.
-			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 1) - 1;
+			newCache.offsetSize = (newCache.slots >> 1) - 1;
 			break;
 		case 2:
 			//Has to be shifted by 2 because we are indexing this into /4 of
 			//the direct mapped cache.
-			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 2) - 1;
+			newCache.offsetSize = (newCache.slots >> 2) - 1;
 			break;
 		default:
 			break;

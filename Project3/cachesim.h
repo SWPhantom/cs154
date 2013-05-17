@@ -8,6 +8,7 @@ typedef struct _cache{
 	int type;
 	int slots;
 	int offsetSize;
+	int byteOffset;
 	
 	int *cacheBlock;
 	int *validBlock;
