@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 		printf("Accesses: %d, Misses: %d\n", y, x);
 		printf("Total Access Time: %d\n\n", totalAccessTime(cache1));
 	}
-	//test5
+	//test6
 	{
 		blockSize = 8;
 		cacheSize = 1024;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 		printf("Total Access Time: %d\n\n", totalAccessTime(cache1));
 	}
 	
-	//test5
+	//test7
 	{
 		blockSize = 8;
 		cacheSize = 1024;
@@ -280,5 +280,39 @@ int main(int argc, char *argv[])
 		y = accessesSoFar(cache1);
 		printf("Accesses: %d, Misses: %d\n", y, x);
 		printf("Total Access Time: %d\n\n", totalAccessTime(cache1));
+	}
+	
+		//////////////////////////////////////////////
+	//test8
+	{
+		blockSize = 8;
+		cacheSize = 64;
+		type = 1;
+		printf("\n==========TEST 3==========\nCreating Associative cache.\nBlocksize: %d\nCacheSize: %d\nType: %d\n\n", blockSize, cacheSize, type);
+		
+		cache3 = createAndInitialize(blockSize, cacheSize, type);
+		//printf("About to run accessCache\n");
+		printf("Hit: %d\n",accessCache(cache3, 0));
+		printf("Hit: %d\n",accessCache(cache3, 4));
+		printf("Hit: %d\n",accessCache(cache3, 8));
+		printf("Hit: %d\n",accessCache(cache3, 12));
+		printf("Hit: %d\n",accessCache(cache3, 64));
+		printf("Hit: %d\n",accessCache(cache3, 68));
+		printf("Hit: %d\n",accessCache(cache3, 72));
+		printf("Hit: %d\n",accessCache(cache3, 76));
+		printf("Hit: %d\n",accessCache(cache3, 0));
+		printf("Hit: %d\n",accessCache(cache3, 4));
+		printf("Hit: %d\n",accessCache(cache3, 8));
+		printf("Hit: %d\n",accessCache(cache3, 12));
+		printf("Hit: %d\n",accessCache(cache3, 64));
+		printf("Hit: %d\n",accessCache(cache3, 68));
+		printf("Hit: %d\n",accessCache(cache3, 72));
+		printf("Hit: %d\n",accessCache(cache3, 76));
+		
+		//Debugging our access methods.
+		x = missesSoFar(cache3);
+		y = accessesSoFar(cache3);
+		printf("Accesses: %d, Misses: %d\n", y, x);
+		printf("Total Access Time: %d\n\n", totalAccessTime(cache3));
 	}
 }

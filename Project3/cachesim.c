@@ -95,18 +95,22 @@ int accessCache(void *cache, int address){
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
+				//printf("%d already in cache!\n", (address>>calcLog(inCache->blockSize)));//debug
 				return 1;
 			}
 			//Miss
 			else{
+				//printf("%d Not in first index...", (address>>calcLog(inCache->blockSize)));
 				++(inCache->pseudoAccesses);	//This is for the extra accesses that may be
 					//necessary for passing the text cases.
 				if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
+					//printf("BUT IS already in SECOND!\n");
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 					inCache->validBlock[offset+1] = 1;
 					return 1;
 				}else{//if there is no match at all
+					//printf("And is NOT in the second index.\n");
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
@@ -116,6 +120,8 @@ int accessCache(void *cache, int address){
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
 			//printf("Invalid.\n");
+			++(inCache->pseudoAccesses);	//This is for the extra accesses that may be
+			//printf("%d Not in the cache and the first entry is not valid.\n", (address>>calcLog(inCache->blockSize)));
 			inCache->validBlock[offset] = 1;
 			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 			++(inCache->misses);
