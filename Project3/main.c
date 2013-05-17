@@ -25,28 +25,16 @@ int main(int argc, char *argv[])
 		printf("\n==========TEST 1==========\nCreating direct mapped cache1.\nBlocksize: %d\nCacheSize: %d\nType: %d\n\n", blockSize, cacheSize, type);
 		
 		cache1 = createAndInitialize(blockSize, cacheSize, type);
-		accessCache(cache1, 18);
-		accessCache(cache1, 18);
-		accessCache(cache1, 390);
-		accessCache(cache1, 9099);
-		accessCache(cache1, 18);
-		accessCache(cache1, 42);
-		accessCache(cache1, 42);
-		accessCache(cache1, 42);
-		accessCache(cache1, 234);
-		accessCache(cache1, 106);
-		accessCache(cache1, 42);
-		accessCache(cache1, 234);
-		accessCache(cache1, 106);
-		accessCache(cache1, 42);
-		accessCache(cache1, 234);
-		accessCache(cache1, 106);
-		accessCache(cache1, 3);
+		accessCache(cache1, 0);
 		accessCache(cache1, 4);
-		accessCache(cache1, 5);
-		accessCache(cache1, 6);
-		accessCache(cache1, 7);
 		accessCache(cache1, 8);
+		accessCache(cache1, 12);
+		accessCache(cache1, 16);
+		accessCache(cache1, 20);
+		accessCache(cache1, 24);
+		accessCache(cache1, 28);
+		accessCache(cache1, 32);
+		
 		
 		//accessCache
 	
@@ -59,7 +47,7 @@ int main(int argc, char *argv[])
 	//////////////////////////////////////////////
 	//test2
 	{
-		blockSize = 32;
+		blockSize = 64;
 		cacheSize = 512;
 		type = 0;
 		printf("\n==========TEST 2==========\nCreating direct mapped cache2.\nBlocksize: %d\nCacheSize: %d\nType: %d\n\n", blockSize, cacheSize, type);
@@ -99,8 +87,8 @@ int main(int argc, char *argv[])
 		//////////////////////////////////////////////
 	//test3
 	{
-		blockSize = 32;
-		cacheSize = 1024;
+		blockSize = 64;
+		cacheSize = 512;
 		type = 1;
 		printf("\n==========TEST 3==========\nCreating Associative cache.\nBlocksize: %d\nCacheSize: %d\nType: %d\n\n", blockSize, cacheSize, type);
 		
@@ -178,9 +166,88 @@ int main(int argc, char *argv[])
 	//test5
 	{
 		blockSize = 8;
-		cacheSize = 2048;
+		cacheSize = 1024;
 		type = 0;
 		printf("\n==========TEST 5==========\nCreating direct mapped cache1.\nBlocksize: %d\nCacheSize: %d\nType: %d\n\n", blockSize, cacheSize, type);
+		
+		cache1 = createAndInitialize(blockSize, cacheSize, type);
+		printf("Hit: %d\n",accessCache(cache1, 18));
+		printf("Hit: %d\n",accessCache(cache1, 18));
+		printf("Hit: %d\n",accessCache(cache1, 390));
+		printf("Hit: %d\n",accessCache(cache1, 9099));
+		printf("Hit: %d\n",accessCache(cache1, 18));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 234));
+		printf("Hit: %d\n",accessCache(cache1, 106));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 234));
+		printf("Hit: %d\n",accessCache(cache1, 106));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 234));
+		printf("Hit: %d\n",accessCache(cache1, 106));
+		printf("Hit: %d\n",accessCache(cache1, 3));
+		printf("Hit: %d\n",accessCache(cache1, 4));
+		printf("Hit: %d\n",accessCache(cache1, 5));
+		printf("Hit: %d\n",accessCache(cache1, 6));
+		printf("Hit: %d\n",accessCache(cache1, 7));
+		printf("Hit: %d\n",accessCache(cache1, 8));
+		
+		//accessCache
+	
+		//Debugging our access methods.
+		x = missesSoFar(cache1);
+		y = accessesSoFar(cache1);
+		printf("Accesses: %d, Misses: %d\n", y, x);
+		printf("Total Access Time: %d\n\n", totalAccessTime(cache1));
+	}
+	//test5
+	{
+		blockSize = 8;
+		cacheSize = 1024;
+		type = 1;
+		printf("\n==========TEST 6==========\nCreating direct mapped cache1.\nBlocksize: %d\nCacheSize: %d\nType: %d\n\n", blockSize, cacheSize, type);
+		
+		cache1 = createAndInitialize(blockSize, cacheSize, type);
+		printf("Hit: %d\n",accessCache(cache1, 18));
+		printf("Hit: %d\n",accessCache(cache1, 18));
+		printf("Hit: %d\n",accessCache(cache1, 390));
+		printf("Hit: %d\n",accessCache(cache1, 9099));
+		printf("Hit: %d\n",accessCache(cache1, 18));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 234));
+		printf("Hit: %d\n",accessCache(cache1, 106));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 234));
+		printf("Hit: %d\n",accessCache(cache1, 106));
+		printf("Hit: %d\n",accessCache(cache1, 42));
+		printf("Hit: %d\n",accessCache(cache1, 234));
+		printf("Hit: %d\n",accessCache(cache1, 106));
+		printf("Hit: %d\n",accessCache(cache1, 3));
+		printf("Hit: %d\n",accessCache(cache1, 4));
+		printf("Hit: %d\n",accessCache(cache1, 5));
+		printf("Hit: %d\n",accessCache(cache1, 6));
+		printf("Hit: %d\n",accessCache(cache1, 7));
+		printf("Hit: %d\n",accessCache(cache1, 8));
+		
+		//accessCache
+	
+		//Debugging our access methods.
+		x = missesSoFar(cache1);
+		y = accessesSoFar(cache1);
+		printf("Accesses: %d, Misses: %d\n", y, x);
+		printf("Total Access Time: %d\n\n", totalAccessTime(cache1));
+	}
+	
+	//test5
+	{
+		blockSize = 8;
+		cacheSize = 1024;
+		type = 2;
+		printf("\n==========TEST 7==========\nCreating direct mapped cache1.\nBlocksize: %d\nCacheSize: %d\nType: %d\n\n", blockSize, cacheSize, type);
 		
 		cache1 = createAndInitialize(blockSize, cacheSize, type);
 		printf("Hit: %d\n",accessCache(cache1, 18));

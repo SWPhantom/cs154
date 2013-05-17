@@ -17,7 +17,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	newCache.type = type;
 	newCache.misses = 0;
 	newCache.accesses = 0;
-	newCache.slots = cachesize/blocksize;
+	newCache.slots = (cachesize>>calcLog(blocksize));
 	newCache.cacheBlock = malloc(sizeof(int) * newCache.slots);
 	newCache.validBlock = malloc(sizeof(int) * newCache.slots);
 	
@@ -37,13 +37,13 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	switch (type){
 		//Direct-Mapped
 		case 0:
-			newCache.offsetSize = cachesize/blocksize - 1;
+			newCache.offsetSize = (cachesize>>calcLog(blocksize)) - 1;
 			break;
 		case 1:
-			newCache.offsetSize = ((cachesize/blocksize) >> 1) - 1;
+			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 1) - 1;
 			break;
 		case 2:
-			newCache.offsetSize = ((cachesize/blocksize) >> 2) - 1;
+			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 2) - 1;
 			break;
 		default:
 			break;
@@ -57,25 +57,31 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 int accessCache(void *cache, int address){
 	Cache *inCache = cache;
 	++(inCache->accesses); // Because every access will add to the access variable
+<<<<<<< HEAD
 	int offset = address>>calcLog(inCache->blockSize) & (inCache->offsetSize);
+=======
+	int offset = (address>>calcLog(inCache->blockSize)) & (inCache->offsetSize);
+>>>>>>> 91ad828e005c960d79dbe4c33bb53c3d3c6db528
 	//Direct-mapped cache
 	if(inCache->type == 0){
 		//Get offset and tag bits from address
 		
+		printf("OFFSET = %d\n", offset);
+		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
-			if (inCache->cacheBlock[offset] == address){
+			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
 				return 1;
 			}
 			//Miss
 			else{
 				//Overwrite slot with tag
-				inCache->cacheBlock[offset] = address;
+				inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 				(inCache->misses)++; //Miss; increment misses;
 				return 0;
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
 			inCache->validBlock[offset] = 1;
-			inCache->cacheBlock[offset] = address;
+			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 			++(inCache->misses);
 			return 0;
 		}
@@ -84,22 +90,27 @@ int accessCache(void *cache, int address){
 	//Pseudo-associative cache
 	if(inCache->type == 1){
 		//Get offset and tag bits from address
+		
+		
 		offset <<= 1;
+		printf("OFFSET = %d\n", offset);
+		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
-			if (inCache->cacheBlock[offset] == address){
+			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
 				return 1;
 			}
 			//Miss
 			else{
-				if(inCache->cacheBlock[offset+1] == address){
+				++(inCache->accesses);
+				if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-					inCache->cacheBlock[offset] = address;
+					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 					inCache->validBlock[offset+1] = 1;
 					return 1;
 				}else{//if there is no match at all
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-					inCache->cacheBlock[offset] = address;
+					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
@@ -107,7 +118,7 @@ int accessCache(void *cache, int address){
 		}else{//If the entry is not valid: miss, validate, and update data.
 			//printf("Invalid.\n");
 			inCache->validBlock[offset] = 1;
-			inCache->cacheBlock[offset] = address;
+			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 			++(inCache->misses);
 			return 0;
 		}
@@ -116,34 +127,38 @@ int accessCache(void *cache, int address){
 	//4-way set associative cache
 	if(inCache->type == 2){
 		//Get offset and tag bits from address
+		
+		
 		offset <<= 2;
+		printf("OFFSET = %d\n", offset);
+		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
-			if (inCache->cacheBlock[offset] == address){
+			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
 				return 1;
 			}
 			//Miss
 			else{
 				if(inCache->validBlock[offset+1] == 1){
-					if(inCache->cacheBlock[offset+1] == address){
+					if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
 						inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-						inCache->cacheBlock[offset] = address;
+						inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 						inCache->validBlock[offset+1] = 1;
 						return 1;
 					}else{
 						if(inCache->validBlock[offset+2] == 1){
-							if(inCache->cacheBlock[offset+2] == address){
+							if(inCache->cacheBlock[offset+2] == (address>>calcLog(inCache->blockSize))){
 								inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 								inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-								inCache->cacheBlock[offset] = address;
+								inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 								inCache->validBlock[offset+2] = 1;
 								return 1;
 							}else{
 								if(inCache->validBlock[offset+3] == 1){
-									if(inCache->cacheBlock[offset+3] == address){
+									if(inCache->cacheBlock[offset+3] == (address>>calcLog(inCache->blockSize))){
 										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-										inCache->cacheBlock[offset] = address;
+										inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 										inCache->validBlock[offset+3] = 1;
 										return 1;
 									}else{
@@ -151,7 +166,7 @@ int accessCache(void *cache, int address){
 										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-										inCache->cacheBlock[offset] = address;
+										inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 										inCache->validBlock[offset+3] = 1;
 										return 0;
 									}
@@ -160,7 +175,7 @@ int accessCache(void *cache, int address){
 									inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 									inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 									inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-									inCache->cacheBlock[offset] = address;
+									inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 									inCache->validBlock[offset+3] = 1;
 									return 0;
 								}
@@ -169,7 +184,7 @@ int accessCache(void *cache, int address){
 							++(inCache->misses);
 							inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 							inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-							inCache->cacheBlock[offset] = address;
+							inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 							inCache->validBlock[offset+2] = 1;
 							return 0;
 						}
@@ -177,7 +192,7 @@ int accessCache(void *cache, int address){
 				}else{//if there is no match at all
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-					inCache->cacheBlock[offset] = address;
+					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
@@ -185,7 +200,7 @@ int accessCache(void *cache, int address){
 		}else{//If the entry is not valid: miss, validate, and update data.
 			//printf("Invalid.\n");
 			inCache->validBlock[offset] = 1;
-			inCache->cacheBlock[offset] = address;
+			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 			++(inCache->misses);
 			return 0;
 		}
