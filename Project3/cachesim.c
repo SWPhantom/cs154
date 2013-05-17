@@ -57,16 +57,13 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 int accessCache(void *cache, int address){
 	Cache *inCache = cache;
 	++(inCache->accesses); // Because every access will add to the access variable
-<<<<<<< HEAD
-	int offset = address>>calcLog(inCache->blockSize) & (inCache->offsetSize);
-=======
+
 	int offset = (address>>calcLog(inCache->blockSize)) & (inCache->offsetSize);
->>>>>>> 91ad828e005c960d79dbe4c33bb53c3d3c6db528
 	//Direct-mapped cache
 	if(inCache->type == 0){
 		//Get offset and tag bits from address
 		
-		printf("OFFSET = %d\n", offset);
+		//printf("OFFSET = %d\n", offset);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
@@ -93,7 +90,7 @@ int accessCache(void *cache, int address){
 		
 		
 		offset <<= 1;
-		printf("OFFSET = %d\n", offset);
+		//printf("OFFSET = %d\n", offset);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
@@ -130,7 +127,7 @@ int accessCache(void *cache, int address){
 		
 		
 		offset <<= 2;
-		printf("OFFSET = %d\n", offset);
+		//printf("OFFSET = %d\n", offset);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
