@@ -55,6 +55,9 @@ int totalAccessTime(void *cache);
 */
 void printCache(void *cache);
 
+/*
+ *This returns the log_2(input) value.
+ */
 int calcLog(int input);
 ////=========================Function Definitions End==================================
 

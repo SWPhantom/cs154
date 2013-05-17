@@ -11,6 +11,7 @@
 ////=========================Function Implementations==================================
 
 void *createAndInitialize(int blocksize, int cachesize, int type){
+	//create local copy of a Cache struct.
 	Cache newCache;
 	newCache.blockSize = blocksize;
 	newCache.cacheSize = cachesize;
@@ -24,33 +25,41 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	
 	//Initialize cache as array of -1.
 	int i;
-	for(i=0; i<newCache.slots; i++){
+	for(i = 0; i < newCache.slots; ++i){
 		newCache.cacheBlock[i] = -1;
 	}
 	//Initialize all validity bits to 0
 	for(i = 0; i < newCache.slots; ++i){
 		newCache.validBlock[i] = 0;
 	}
-	
-	//printf("Log of blocksize: %d.\n",calcLog(newCache.blockSize));//DEBUG
-	
+
 	//Change the offsetSize in accordance to the type of cache this is.
+	//The offset size acts as a mask to get the index bits from the
+	//address.
+	//XXX: This mask starts right after the byte offset (which is cal-
+	//culated by >>calcLog(blocksize).
 	switch (type){
 		//Direct-Mapped
 		case 0:
 			newCache.offsetSize = (cachesize>>calcLog(blocksize)) - 1;
 			break;
 		case 1:
+			//Has to be shifted by 1 because we are indexing this into /2 of
+			//the direct mapped cache.
 			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 1) - 1;
 			break;
 		case 2:
+			//Has to be shifted by 2 because we are indexing this into /4 of
+			//the direct mapped cache.
 			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 2) - 1;
 			break;
 		default:
 			break;
 	}
-	//printf("Offset Size: %d\n", newCache.offsetSize);//DEBUG
+
+	//Allocate Cache amount of memory.
 	Cache *outputPointer = (Cache*) malloc(sizeof(Cache));
+	//Pass the local struct to the pointer by copy, preserving the struct
 	*outputPointer = newCache;
 	return outputPointer;
 }
@@ -59,22 +68,24 @@ int accessCache(void *cache, int address){
 	Cache *inCache = cache;
 	++(inCache->accesses); // Because every access will add to the access variable
 
+	//Create the index value, shifted by the byteOffset and masked by the
+	//previously computed offsetSize.
 	int offset = (address>>calcLog(inCache->blockSize)) & (inCache->offsetSize);
-	//Direct-mapped cache
+
+	//Direct-mapped cache block
 	if(inCache->type == 0){
-		//Get offset and tag bits from address
-		
-		//printf("OFFSET = %d\n", offset);
-		
-		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
+
+		//Check to see if the valid bit at the index is valid.
+		if(inCache->validBlock[offset] == 1){
+			//If the address in entry is already correct, do nothing!
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
 				return 1;
 			}
-			//Miss
+			//Miss!
 			else{
-				//Overwrite slot with tag
+				//Overwrite slot with tag and increment miss variable
 				inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
-				(inCache->misses)++; //Miss; increment misses;
+				(inCache->misses)++;
 				return 0;
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
@@ -83,34 +94,29 @@ int accessCache(void *cache, int address){
 			++(inCache->misses);
 			return 0;
 		}
-	}else
-	
+	}
+
 	//Pseudo-associative cache
-	if(inCache->type == 1){
-		//Get offset and tag bits from address
-		
-		
-		offset <<= 1; //This is to spread the offset up to make it go in the correct blocks
-		//printf("OFFSET = %d\n", offset);
-		
-		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
+	else if(inCache->type == 1){
+		offset <<= 1; //This is to spread the offset out to make it go in the correct blocks
+
+		//Check to see if the valid bit at the index is valid.
+		if(inCache->validBlock[offset] == 1){
+			//If the address in entry is already correct, do nothing!
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
-				//printf("%d already in cache!\n", (address>>calcLog(inCache->blockSize)));//debug
 				return 1;
 			}
 			//Miss
 			else{
-				//printf("%d Not in first index...", (address>>calcLog(inCache->blockSize)));
-				++(inCache->pseudoAccesses);	//This is for the extra accesses that may be
-					//necessary for passing the text cases.
+				++(inCache->pseudoAccesses);	//Extra access for pseudo-associative case.
+
+				//Check the second block for the correct address
 				if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
-					//printf("BUT IS already in SECOND!\n");
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 					inCache->validBlock[offset+1] = 1;
 					return 1;
 				}else{//if there is no match at all
-					//printf("And is NOT in the second index.\n");
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
@@ -119,38 +125,37 @@ int accessCache(void *cache, int address){
 				}
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
-			//printf("Invalid.\n");
-			++(inCache->pseudoAccesses);	//This is for the extra accesses that may be
-			//printf("%d Not in the cache and the first entry is not valid.\n", (address>>calcLog(inCache->blockSize)));
+			++(inCache->pseudoAccesses);	//Extra access for pseudo-associative case.
 			inCache->validBlock[offset] = 1;
 			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 			++(inCache->misses);
 			return 0;
 		}
-	}else
-	
+	}
+
 	//4-way set associative cache
-	if(inCache->type == 2){
-		//Get offset and tag bits from address
-		
-		
-		offset <<= 2;	//This is to spread the offset up to make it go in the correct blocks
-		//printf("OFFSET = %d\n", offset);
-		
-		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
+	else if(inCache->type == 2){
+		offset <<= 2;	//This is to spread the offset out to make it go in the correct blocks
+
+		//Check to see if the valid bit at the index is valid.
+		if(inCache->validBlock[offset] == 1){
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
 				return 1;
 			}
 			//Miss
 			else{
+				//Check the second index validity.
 				if(inCache->validBlock[offset+1] == 1){
+					//Hit!
 					if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
 						inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 						inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 						inCache->validBlock[offset+1] = 1;
 						return 1;
 					}else{
+						//Check the third index validity.
 						if(inCache->validBlock[offset+2] == 1){
+							//Hit!
 							if(inCache->cacheBlock[offset+2] == (address>>calcLog(inCache->blockSize))){
 								inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 								inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
@@ -158,7 +163,9 @@ int accessCache(void *cache, int address){
 								inCache->validBlock[offset+2] = 1;
 								return 1;
 							}else{
+								//Check the fourth index validity.
 								if(inCache->validBlock[offset+3] == 1){
+									//Hit!
 									if(inCache->cacheBlock[offset+3] == (address>>calcLog(inCache->blockSize))){
 										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
@@ -167,6 +174,7 @@ int accessCache(void *cache, int address){
 										inCache->validBlock[offset+3] = 1;
 										return 1;
 									}else{
+										//Miss in the fourth. Shift the entries!
 										++(inCache->misses);
 										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
@@ -176,6 +184,7 @@ int accessCache(void *cache, int address){
 										return 0;
 									}
 								}else{
+									//Miss in the fourth. Shift the entries!
 									++(inCache->misses);
 									inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 									inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
@@ -186,6 +195,7 @@ int accessCache(void *cache, int address){
 								}
 							}
 						}else{
+							//Miss in the third. Shift the entries!
 							++(inCache->misses);
 							inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 							inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
@@ -194,7 +204,7 @@ int accessCache(void *cache, int address){
 							return 0;
 						}
 					}
-				}else{//if there is no match at all
+				}else{//Miss in the second. Shift the entries!
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
@@ -203,15 +213,14 @@ int accessCache(void *cache, int address){
 				}
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
-			//printf("Invalid.\n");
 			inCache->validBlock[offset] = 1;
 			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
 			++(inCache->misses);
 			return 0;
 		}
 
-
-	}else{//Something went wrong and the type was not set correctly.
+	//Something went wrong and the type was not set correctly.
+	}else{
 		return -1;
 	}
 	
@@ -230,16 +239,25 @@ int accessesSoFar(void *cache){
 int totalAccessTime(void *cache){
 	Cache *inCache = cache;
 	
+	//Direct cache:
+		//Access cost: 1
+		//Miss cost:100
 	if(inCache->type == 0){
 		int temp = (inCache->misses)*100+(inCache->accesses);
 		return temp;
 	}else
-	
+
+	//Pseudo-associative cache:
+		//Access cost: 1 (2 accesses for an initial miss.)
+		//Miss cost:100
 	if(inCache->type == 1){
 		int temp = (inCache->misses)*100+(inCache->accesses)+(inCache->pseudoAccesses);
 		return temp;
 	}else
-	
+
+	//Fully-associative cache:
+		//Access cost: 3
+		//Miss cost:100
 	if(inCache->type == 2){
 		int temp = (inCache->misses)*100+(inCache->accesses)*3;
 		return temp;
@@ -249,6 +267,7 @@ int totalAccessTime(void *cache){
 }
 
 void printCache(void *cache){
+	//Print every entry of the cache.
 	Cache *inCache = cache;
 	printf("Cache slots:");
 	int i;
@@ -259,6 +278,11 @@ void printCache(void *cache){
 }
 
 int calcLog(int input){
+	//This function shifts the input value right until
+	//it is 0. Every time it shifts, increments the
+	//output value by 1.
+	//This may have issues with integers starting with
+	//a 1(in binary).
 	int counter = -1;
 	while(input != 0){
 		input >>= 1;
