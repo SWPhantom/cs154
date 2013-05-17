@@ -15,6 +15,7 @@ typedef struct _cache{
 	int misses;
 	int accesses;
 	int totalAccessTime;
+	int pseudoAccesses;
 } Cache;
 
 ////=======================Function Prototypes=========================================
