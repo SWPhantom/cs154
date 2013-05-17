@@ -71,7 +71,8 @@ int accessCache(void *cache, int address){
 
 	//Create the index value, shifted by the byteOffset and masked by the
 	//previously computed offsetSize.
-	int offset = (address>>calcLog(inCache->blockSize)) & (inCache->offsetSize);
+	int value = address>>inCache->byteOffset;
+	int offset = value & (inCache->offsetSize);
 
 	//Direct-mapped cache block
 	if(inCache->type == 0){
@@ -79,19 +80,19 @@ int accessCache(void *cache, int address){
 		//Check to see if the valid bit at the index is valid.
 		if(inCache->validBlock[offset] == 1){
 			//If the address in entry is already correct, do nothing!
-			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
+			if (inCache->cacheBlock[offset] == value){
 				return 1;
 			}
 			//Miss!
 			else{
 				//Overwrite slot with tag and increment miss variable
-				inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+				inCache->cacheBlock[offset] = value;
 				(inCache->misses)++;
 				return 0;
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
 			inCache->validBlock[offset] = 1;
-			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+			inCache->cacheBlock[offset] = value;
 			++(inCache->misses);
 			return 0;
 		}
@@ -104,7 +105,7 @@ int accessCache(void *cache, int address){
 		//Check to see if the valid bit at the index is valid.
 		if(inCache->validBlock[offset] == 1){
 			//If the address in entry is already correct, do nothing!
-			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
+			if (inCache->cacheBlock[offset] == value){
 				return 1;
 			}
 			//Miss
@@ -112,15 +113,15 @@ int accessCache(void *cache, int address){
 				++(inCache->pseudoAccesses);	//Extra access for pseudo-associative case.
 
 				//Check the second block for the correct address
-				if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
+				if(inCache->cacheBlock[offset+1] == value){
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+					inCache->cacheBlock[offset] = value;
 					inCache->validBlock[offset+1] = 1;
 					return 1;
 				}else{//if there is no match at all
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+					inCache->cacheBlock[offset] = value;
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
@@ -128,7 +129,7 @@ int accessCache(void *cache, int address){
 		}else{//If the entry is not valid: miss, validate, and update data.
 			++(inCache->pseudoAccesses);	//Extra access for pseudo-associative case.
 			inCache->validBlock[offset] = 1;
-			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+			inCache->cacheBlock[offset] = value;
 			++(inCache->misses);
 			return 0;
 		}
@@ -140,7 +141,7 @@ int accessCache(void *cache, int address){
 
 		//Check to see if the valid bit at the index is valid.
 		if(inCache->validBlock[offset] == 1){
-			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
+			if (inCache->cacheBlock[offset] == value){
 				return 1;
 			}
 			//Miss
@@ -148,30 +149,30 @@ int accessCache(void *cache, int address){
 				//Check the second index validity.
 				if(inCache->validBlock[offset+1] == 1){
 					//Hit!
-					if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
+					if(inCache->cacheBlock[offset+1] == value){
 						inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-						inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+						inCache->cacheBlock[offset] = value;
 						inCache->validBlock[offset+1] = 1;
 						return 1;
 					}else{
 						//Check the third index validity.
 						if(inCache->validBlock[offset+2] == 1){
 							//Hit!
-							if(inCache->cacheBlock[offset+2] == (address>>calcLog(inCache->blockSize))){
+							if(inCache->cacheBlock[offset+2] == value){
 								inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 								inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-								inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+								inCache->cacheBlock[offset] = value;
 								inCache->validBlock[offset+2] = 1;
 								return 1;
 							}else{
 								//Check the fourth index validity.
 								if(inCache->validBlock[offset+3] == 1){
 									//Hit!
-									if(inCache->cacheBlock[offset+3] == (address>>calcLog(inCache->blockSize))){
+									if(inCache->cacheBlock[offset+3] == value){
 										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-										inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+										inCache->cacheBlock[offset] = value;
 										inCache->validBlock[offset+3] = 1;
 										return 1;
 									}else{
@@ -180,7 +181,7 @@ int accessCache(void *cache, int address){
 										inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 										inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 										inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-										inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+										inCache->cacheBlock[offset] = value;
 										inCache->validBlock[offset+3] = 1;
 										return 0;
 									}
@@ -190,7 +191,7 @@ int accessCache(void *cache, int address){
 									inCache->cacheBlock[offset+3] = inCache->cacheBlock[offset+2];
 									inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 									inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-									inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+									inCache->cacheBlock[offset] = value;
 									inCache->validBlock[offset+3] = 1;
 									return 0;
 								}
@@ -200,7 +201,7 @@ int accessCache(void *cache, int address){
 							++(inCache->misses);
 							inCache->cacheBlock[offset+2] = inCache->cacheBlock[offset+1];
 							inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-							inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+							inCache->cacheBlock[offset] = value;
 							inCache->validBlock[offset+2] = 1;
 							return 0;
 						}
@@ -208,14 +209,14 @@ int accessCache(void *cache, int address){
 				}else{//Miss in the second. Shift the entries!
 					++(inCache->misses);
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
-					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+					inCache->cacheBlock[offset] = value;
 					inCache->validBlock[offset+1] = 1;
 					return 0;
 				}
 			}
 		}else{//If the entry is not valid: miss, validate, and update data.
 			inCache->validBlock[offset] = 1;
-			inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
+			inCache->cacheBlock[offset] = value;
 			++(inCache->misses);
 			return 0;
 		}
