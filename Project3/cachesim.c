@@ -17,7 +17,7 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	newCache.type = type;
 	newCache.misses = 0;
 	newCache.accesses = 0;
-	newCache.slots = cachesize/blocksize;
+	newCache.slots = (cachesize>>calcLog(blocksize));
 	newCache.cacheBlock = malloc(sizeof(int) * newCache.slots);
 	newCache.validBlock = malloc(sizeof(int) * newCache.slots);
 	
@@ -37,13 +37,13 @@ void *createAndInitialize(int blocksize, int cachesize, int type){
 	switch (type){
 		//Direct-Mapped
 		case 0:
-			newCache.offsetSize = cachesize/blocksize - 1;
+			newCache.offsetSize = (cachesize>>calcLog(blocksize)) - 1;
 			break;
 		case 1:
-			newCache.offsetSize = ((cachesize/blocksize) >> 1) - 1;
+			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 1) - 1;
 			break;
 		case 2:
-			newCache.offsetSize = ((cachesize/blocksize) >> 2) - 1;
+			newCache.offsetSize = (((cachesize>>calcLog(blocksize))) >> 2) - 1;
 			break;
 		default:
 			break;
@@ -62,7 +62,7 @@ int accessCache(void *cache, int address){
 	if(inCache->type == 0){
 		//Get offset and tag bits from address
 		
-		//printf("OFFSET = %d\n", offset);
+		printf("OFFSET = %d\n", offset);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
@@ -88,8 +88,8 @@ int accessCache(void *cache, int address){
 		//Get offset and tag bits from address
 		
 		
-		offset >>= 1;
-		//printf("OFFSET = %d\n", offset);
+		offset <<= 1;
+		printf("OFFSET = %d\n", offset);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
@@ -125,8 +125,8 @@ int accessCache(void *cache, int address){
 		//Get offset and tag bits from address
 		
 		
-		offset >>= 2;
-		//printf("OFFSET = %d\n", offset);
+		offset <<= 2;
+		printf("OFFSET = %d\n", offset);
 		
 		if(inCache->validBlock[offset] == 1){//Sees if the entry valid
 			if (inCache->cacheBlock[offset] == (address>>calcLog(inCache->blockSize))){
