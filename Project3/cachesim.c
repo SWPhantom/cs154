@@ -97,6 +97,7 @@ int accessCache(void *cache, int address){
 			}
 			//Miss
 			else{
+				++(inCache->accesses);
 				if(inCache->cacheBlock[offset+1] == (address>>calcLog(inCache->blockSize))){
 					inCache->cacheBlock[offset+1] = inCache->cacheBlock[offset];
 					inCache->cacheBlock[offset] = (address>>calcLog(inCache->blockSize));
