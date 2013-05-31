@@ -1,12 +1,12 @@
-#ifndef CACHESIM_H
-#define CACHESIM_H
+#ifndef BRANCHSIM_H
+#define BRANCHSIM_H
 
 ////=========================Declarations==============================================
 typedef struct _cache{
 	int cacheSize;
-	
+
 	int *cacheBlock;
-	
+
 	int accesses;
 	int mispredictions;
 } Cache;
@@ -25,7 +25,6 @@ void *createAndInitialize(int numEntries);
  */
 int accessBranchPredictor(void *bp, int PC);
 
-
 /*
  *Given the PC of the branch and the actual result (1 = taken, 0 = not taken),
  *update the branch predictor for that entry in the table.
@@ -41,11 +40,6 @@ int numAccesses(void *bp);
  *Report the total number of branches that were incorrectly predicted
  */
 int numMispredictions(void *bp);
-
-/*
- *This returns the log_2(input) value.
- */
-int calcLog(int input);
 ////=========================Function Definitions End==================================
 
 #endif
