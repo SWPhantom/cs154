@@ -36,6 +36,8 @@ int accessBranchPredictor(void *bp, int PC){
 	//Calculate offset, which ignores the two bits that never change on the right
 	//and masks it with as many bits as the cacheSize is (in binary).
 	int offset = ((PC >> 2) & (inCache->cacheSize - 1));
+	
+	////TODO: Need to make sure accesses gets updated.
 	printf("DEBUG : (inCache->cacheSize - 1) = %d\n", (inCache->cacheSize - 1));
 	printf("DEBUG : offset = %d\n", offset);
 	return inCache->cacheBlock[offset];
@@ -48,6 +50,7 @@ void updateBranchPredictor(void *bp, int PC, int result){
 	//and masks it with as many bits as the cacheSize is (in binary).
 	int offset = ((PC >> 2) & (inCache->cacheSize - 1));
 	
+	////TODO: Need to have the misprediction implemented.
 	if(result == 0){//If the actual input says not taken.
 		if(inCache->cacheBlock[offset] < 3){
 			inCache->cacheBlock[offset] = 0;
