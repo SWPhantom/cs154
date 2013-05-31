@@ -4,19 +4,11 @@
 ////=========================Declarations==============================================
 typedef struct _cache{
 	int cacheSize;
-	int blockSize;
-	int type;
-	int slots;
-	int offsetSize;
-	int byteOffset;
 	
 	int *cacheBlock;
-	int *validBlock;
 	
-	int misses;
 	int accesses;
-	int totalAccessTime;
-	int pseudoAccesses;
+	int mispredictions;
 } Cache;
 
 ////=======================Function Prototypes=========================================
@@ -49,6 +41,11 @@ int numAccesses(void *bp);
  *Report the total number of branches that were incorrectly predicted
  */
 int numMispredictions(void *bp);
+
+/*
+ *This returns the log_2(input) value.
+ */
+int calcLog(int input);
 ////=========================Function Definitions End==================================
 
 #endif
